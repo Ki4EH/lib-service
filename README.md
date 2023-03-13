@@ -24,44 +24,62 @@ Lib Service - Go - это проект, идея которого заключа
 # Структура базы данных
 ```mermaid
 classDiagram
-direction LR
-class USER{
+direction TB
+
+book <--> genre 
+book <--> genre_book
+genre <--> genre_book
+
+class author{
+    id INTEGER
+    name TEXT
+}
+
+class book{
+    id INTEGER
+    name TEXT
+    author_id INTEGER
+    genre_id INTEGER
+    ISBN TEXT
+}
+
+class genre{
+    id INTEGER
+    name TEXT
+}
+
+class genre_book{
+    genre_id INTEGER
+    book_id INTEGER
+}
+
+class author_book{
+    author_id INTEGER
+    book_id INTEGER
+}
+
+class catalog{
+    id INTEGER
+    book_id INTEGER
+    count INTEGER
+}
+
+class user{
     id INTEGER
     login TEXT
     email TEXT
-    password TEXT
-    role TEXT
+    password_hash TEXT
+    flags TEXT
+    confirm_token TEXT
 }
 
-direction LR
-class CATALOG{
+class queue{
     id INTEGER
-    author TEXT
-    title TEXT
-    ISBN TEXT
-    count INT
-}
-
-direction LR
-class QUEUE{
-    id INTEGER
-    userid INTEGER
-    bookid INTEGER
+    user_id INTEGER
+    book_id INTEGER
+    created_at INTEGER
     status INTEGER
-    createdate INTEGER
-    expireddate INTEGER
 }
-
-direction LR
-class USER_PREF{
-    userid INTEGER
-    tag TEXT
-    author TEXT
-}
-
-USER "1" --> "2" QUEUE
-CATALOG "1" --> "3" QUEUE
-USER "1" --> "1" USER_PREF
 
 ```
 
