@@ -72,27 +72,55 @@ direction LR
 class USER{
     POST /register
     POST /login
-    GET /verify
+    GET /verify/:email_confirmation_token
 }
 
 direction LR
 class CATALOG{
     GET /search
-    GET /book
+    GET /book/:book_id
 }
 
 direction LR
 class QUEUE_LOAN{
-    GET /status
-    POST /loan
-    POST /cancel
+    GET /status/:book_id
+    POST /loan/:book_id
+    POST /cancel/:book_id
 }
 
 direction LR
 class STATISTICS{
     GET /recomendations
-    GET /similar
+    GET /similar/:book_id
     GET /popular
+}
+```
+
+# REST API Data
+```
+POST /register
+FORM: {
+    email,
+    login,
+    password
+}
+
+POST /login
+FORM: {
+    email,
+    password
+}
+
+GET /search
+FORM: {
+    q // Поисковой запрос
+}
+```
+
+# Json Web Token Payload
+```
+{
+    user_id
 }
 ```
 
