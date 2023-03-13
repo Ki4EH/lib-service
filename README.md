@@ -72,6 +72,7 @@ direction LR
 class USER{
     POST /register
     POST /login
+    POST /logout
     GET /verify/:email_confirmation_token
 }
 
