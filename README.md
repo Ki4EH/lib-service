@@ -79,6 +79,7 @@ direction LR
 class CATALOG{
     GET /search
     GET /book/:book_id
+    POST /book
 }
 
 direction LR
