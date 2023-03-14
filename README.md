@@ -110,7 +110,7 @@ class QUEUE_LOAN{
 
 direction LR
 class STATISTICS{
-    GET /recomendations
+    GET /recommendations
     GET /similar/:book_id
     GET /popular
 }
