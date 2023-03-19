@@ -71,6 +71,7 @@ class user{
     password_hash TEXT
     flags TEXT
     confirm_token TEXT
+    is_activated BOOLEAN
 }
 
 class queue{
