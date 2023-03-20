@@ -149,7 +149,7 @@ FORM: {
 
 Руководитель команды разработчиков -> [Аксенов Кирилл](https://github.com/Ki4EH/)
 
-Разработчик -> [1](https://github.com/) \
+Разработчик -> [Кириченко Никита](https://github.com/KirichenkoND) \
 Разработчик -> [Делимарский Андрей](https://github.com/lekasNet) \
 Разработчик -> [1](https://github.com/) \
 Разработчик -> [1](https://github.com/) \
