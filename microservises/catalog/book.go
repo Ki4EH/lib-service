@@ -2,8 +2,8 @@ package catalog
 
 type Book struct {
 	ID     int      `json:"id"`
-	Author string   `json:"author"`
 	Title  string   `json:"title"`
+	Author string   `json:"author"`
 	ISBN   string   `json:"isbn"`
 	Count  int      `json:"count"`
 	Genres []string `json:"genres"`

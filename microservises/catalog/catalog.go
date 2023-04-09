@@ -3,27 +3,40 @@ package catalog
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 )
 
 // RunCatalogHandler Описывает обработку http запросов
 func RunCatalogHandler(db *sql.DB) {
 	http.HandleFunc("/book", func(writer http.ResponseWriter, request *http.Request) {
-		id, err := strconv.Atoi(request.URL.Query().Get("book_id"))
-		if err != nil {
-			panic(err)
-		}
-		book := getBookByID(db, id)
+		if request.Method == http.MethodGet {
+			id, err := strconv.Atoi(request.URL.Query().Get("book_id"))
+			if err != nil {
+				panic(err)
+			}
+			book := getBookByID(db, id)
 
-		res, err1 := json.Marshal(book)
-		if err1 != nil {
-			panic(err1)
-		}
-		_, err2 := writer.Write(res)
-		if err2 != nil {
-			return
+			res, err1 := json.Marshal(book)
+			if err1 != nil {
+				panic(err1)
+			}
+			_, err2 := writer.Write(res)
+			if err2 != nil {
+				return
+			}
+		} else if request.Method == http.MethodPost {
+			var book Book = Book{
+				Title:  request.URL.Query().Get("title"),
+				Author: request.URL.Query().Get("author"),
+				ISBN:   request.URL.Query().Get("isbn")}
+			c, err := strconv.Atoi(request.URL.Query().Get("count"))
+			if err != nil {
+				panic(err)
+			}
+			book.Count = c
+			postBook(db, book)
 		}
 	})
 
@@ -49,15 +62,14 @@ func RunCatalogHandler(db *sql.DB) {
 
 func getBookByID(db *sql.DB, id int) Book {
 	// Получение от бд основной инфы про книгу, заносится в переменную book
-	rows := db.QueryRow("select * from books where id = $1", id)
+	rows := db.QueryRow("select b.id, b.name, b.\"ISBN\", a.name, count from catalog JOIN book b ON catalog.book_id = b.id JOIN author a on a.id = b.author_id where b.id = $1", id)
 	book := Book{}
-	var nullAuthor sql.NullString
-	err := rows.Scan(&book.ID, &book.Title, &book.Count, &nullAuthor)
-	if reflect.TypeOf(nullAuthor) == nil {
-		book.Author = ""
-	} else {
-		book.Author = nullAuthor.String
-	}
+	err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
+	//if reflect.TypeOf(nullAuthor) == nil {
+	//	book.Author = ""
+	//} else {
+	//	book.Author = nullAuthor.String
+	//}
 
 	if err != nil {
 		panic(err)
@@ -65,6 +77,25 @@ func getBookByID(db *sql.DB, id int) Book {
 	scanGenres(db, &book)
 
 	return book
+}
+
+func postBook(db *sql.DB, book Book) {
+	b := findByISBN(db, book.ISBN)
+	if b.ID != 0 {
+		fmt.Println("Книга уже есть в каталоге!")
+		book.ID = b.ID
+		updateCatalog(db, book, b.Count)
+		return
+	}
+
+	authorId := getAuthorId(db, book.Author)
+	if authorId == 0 {
+		authorId = insertAuthor(db, book.Author)
+	}
+
+	id := insertBook(db, book, authorId)
+	book.ID = id
+	insertCatalog(db, book)
 }
 
 // Через эту функцию будет осуществляться основной поиск в бд.
@@ -104,14 +135,14 @@ func search(db *sql.DB, title string, author string) []Book {
 // Поиск по названию :\
 func searchByTitle(db *sql.DB, title string) []Book {
 	var books []Book
-	rows, err := db.Query("SELECT books.id, title, count, name FROM books JOIN authors a ON a.id = books.author_id WHERE title = $1", title)
+	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id WHERE b.name = $1", title)
 	if err != nil {
 		panic(err)
 	}
 
 	for rows.Next() {
 		var book Book
-		err := rows.Scan(&book.ID, &book.Title, &book.Count, &book.Author)
+		err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
 			panic(err)
 		}
@@ -122,14 +153,14 @@ func searchByTitle(db *sql.DB, title string) []Book {
 
 func searchByAuthor(db *sql.DB, author string) []Book {
 	var books []Book
-	rows, err := db.Query("SELECT books.id, title, count, name FROM books JOIN authors a ON books.author_id = a.id WHERE a.name = $1", author)
+	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id WHERE a.name = $1", author)
 	if err != nil {
 		panic(err)
 	}
 
 	for rows.Next() {
 		var book Book
-		err = rows.Scan(&book.ID, &book.Title, &book.Count, &book.Author)
+		err = rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
 			panic(err)
 		}
@@ -138,9 +169,57 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 	return books
 }
 
+func findByISBN(db *sql.DB, ISBN string) Book {
+	row := db.QueryRow("SELECT b.id, b.name, a.name, \"ISBN\", count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a on a.id = b.author_id WHERE \"ISBN\" = $1", ISBN)
+	book := Book{}
+	row.Scan(&book.ID, &book.Title, &book.Author, &book.ISBN, &book.Count)
+	return book
+}
+
+func getAuthorId(db *sql.DB, name string) int {
+	var id int
+	err := db.QueryRow("SELECT id FROM author WHERE name = $1", name).Scan(&id)
+	if err != nil {
+		return 0
+	}
+	return id
+}
+
+func insertAuthor(db *sql.DB, name string) int {
+	var id int
+	err := db.QueryRow("INSERT INTO author (name) VALUES ($1) RETURNING id", name).Scan(&id)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func insertBook(db *sql.DB, book Book, authorId int) int {
+	var id int
+	err := db.QueryRow("INSERT INTO book (name, author_id, \"ISBN\") VALUES ($1, $2, $3) RETURNING id", book.Title, authorId, book.ISBN).Scan(&id)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func updateCatalog(db *sql.DB, book Book, count int) {
+	_, err := db.Exec("UPDATE catalog SET count = $1 WHERE book_id = $2", book.Count+count, book.ID)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func insertCatalog(db *sql.DB, book Book) {
+	_, err := db.Exec("INSERT INTO catalog (book_id, count) VALUES ($1, $2)", book.ID, book.Count)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func scanGenres(db *sql.DB, book *Book) {
 	// Получения жанров книги
-	genres, err1 := db.Query("SELECT name FROM genre_book JOIN genres g ON g.id = genre_book.genre_id WHERE book_id = $1", book.ID)
+	genres, err1 := db.Query("SELECT name FROM genre_book JOIN genre g ON g.id = genre_book.genre_id WHERE book_id = $1", book.ID)
 	if err1 != nil {
 		panic(err1)
 	}
