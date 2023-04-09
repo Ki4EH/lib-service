@@ -10,7 +10,7 @@ import (
 
 func main() {
 	// Подключение у бд
-	connStr := "user=postgres password=livmas dbname=testcatalog sslmode=disable"
+	connStr := "host=95.140.159.168 port=5433 user=go_project password=rIo3Fc dbname=lib-service-test sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {
