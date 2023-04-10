@@ -1,26 +1,25 @@
-#[derive(Debug)]
-pub struct Book {
-    pub id: i32,
-    pub name: String,
-    pub author_id: i32,
-    pub genre_id: i32,
-    pub isbn: String,
-}
+use sqlx::{
+    types::chrono::{DateTime, Utc},
+    FromRow, Type,
+};
 
-#[derive(Debug)]
-pub struct Author {
-    pub id: i32,
-    pub name: String,
-}
-
-#[derive(Debug)]
-pub struct Catalog {
-    pub id: i32,
+#[derive(Debug, FromRow)]
+pub struct Record {
+    pub user_id: i32,
     pub book_id: i32,
-    pub count: i32,
+    pub status: Status,
+    pub date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Type)]
+#[repr(i32)]
+pub enum Status {
+    PendingBorrow,
+    Acquried,
+    Queued,
+}
+
+#[derive(Debug, FromRow)]
 pub struct User {
     pub id: i32,
     pub login: String,
