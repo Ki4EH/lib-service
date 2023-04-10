@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 axum = { version = "0.6.11", features = ["macros"] }
+axum-extra = { version = "0.7.2", features = ["cookie"] }
 chrono = "0.4.24"
 dotenvy = "0.15.6"
 eyre = "0.6.8"
