@@ -13,7 +13,6 @@ import (
 )
 
 var (
-	//salt       = ""
 	salt       = os.Getenv("SALT")
 	tokenTTL   = 24 * time.Hour
 	signingKey = os.Getenv("SIGNINGKEY")

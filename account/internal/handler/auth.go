@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/Ki4EH/lib-service/account/entities"
 	"github.com/gin-gonic/gin"
@@ -49,14 +48,14 @@ func (h *Handler) login(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("token", token, 60*60*60*24, "/", viper.GetString("SERVER_DOMAIN"), false, true)
 	c.JSON(http.StatusOK, map[string]interface{}{
 		"token": token,
 	})
-	c.SetCookie("token", token, 60*60*60*24, "/", strings.Split(viper.GetString("SERVER_URL"), ":")[0], false, true)
 }
 
 func (h *Handler) logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "localhost", false, true)
+	c.SetCookie("token", "", -1, "/", viper.GetString("SERVER_DOMAIN"), false, true)
 }
 
 func (h *Handler) verify(c *gin.Context) {
