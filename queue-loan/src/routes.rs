@@ -2,15 +2,14 @@ use crate::{
     access::Access,
     error::Result,
     models::{Record, Status},
-    state::ServerState,
+    state::StateExtract,
 };
 use axum::extract::{Path, State};
 use chrono::{Duration, Utc};
-use std::sync::Arc;
 
 // GET /status/:book_id
 pub async fn status_by_book_id(
-    State(state): State<Arc<ServerState>>,
+    State(state): StateExtract,
     Path(book_id): Path<i32>,
 ) -> Result<&'static str> {
     let mut tx = state.postgres.begin().await?;
@@ -33,7 +32,7 @@ pub async fn status_by_book_id(
 
 // POST /loan/:book_id
 pub async fn loan_by_book_id(
-    State(state): State<Arc<ServerState>>,
+    State(state): StateExtract,
     Path(book_id): Path<i32>,
     access: Access,
 ) -> Result<()> {
@@ -83,7 +82,7 @@ pub async fn loan_by_book_id(
 
 // POST /cancel/:book_id
 pub async fn cancel_by_book_id(
-    State(state): State<Arc<ServerState>>,
+    State(state): StateExtract,
     Path(book_id): Path<i32>,
     access: Access,
 ) -> Result<()> {
