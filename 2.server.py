@@ -1,6 +1,7 @@
 import asyncio
 import json
 import websockets
+from neural import predict
 
 active_sockets = set()
 
@@ -13,9 +14,12 @@ async def handler_json(json_string):
     """
     # Выводим полученный текст от клиента client.go
     print(json_string)
+    prediction = predict(json_string["Details"])
+
+    print(prediction)
     # Отправляем ответ на server.go
     async with websockets.connect("ws://localhost:8899") as websocket:
-        # json_string = {**json_string, "finished": 1}
+        json_string = {**json_string, "Recommend": int(round(prediction))}
         json_string = json.dumps(json_string)
         await websocket.send(json_string)
 

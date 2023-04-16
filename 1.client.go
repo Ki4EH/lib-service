@@ -8,9 +8,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type json_t struct {
-	Message string `json:"Message"`
-	Details []int  `json:"Details"`
+type Message struct {
+	Message string
+	Details []int
 }
 
 func main() {
@@ -25,7 +25,7 @@ func main() {
 	defer conn.Close()
 
 	// Гненерируем сообщение и передаём его на сервер.
-	message := json_t{"Zubenko", []int{1, 2, 3, 4, 5}}
+	message := Message{"Zubenko", []int{1, 2, 2, 1, 1}}
 
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {

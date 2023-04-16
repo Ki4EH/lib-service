@@ -8,9 +8,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type json_t struct {
-	Message string `json:"Message"`
-	Details []int  `json:"Details"`
+type Message struct {
+	Message  string
+	Details  []int
+	Finished int
 }
 
 var upgrader = websocket.Upgrader{
@@ -44,7 +45,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Обработка сырого JSON.
-		var msg json_t
+		var msg Message
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			log.Println(err)
@@ -58,6 +59,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		log.Printf("Сообщение:\n%v\n\n", string(msgJSON))
+
 	}
 
 }
