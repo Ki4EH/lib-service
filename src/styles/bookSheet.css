@@ -1,0 +1,30 @@
+.bookPrev {
+  margin-left: 15px;
+  display: grid;
+  word-wrap: break-word;
+  width: 203px;
+  height: 341px;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bookPrev:hover {
+  transition: 0.5s;
+  cursor: pointer;
+  background-color: #ddd;
+}
+
+.bookImg {
+  padding-left: 3px;
+}
+
+.bookInfo {
+  display: flex;
+  padding-left: 3px;
+
+  font-family: "Arial";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 16px;
+  width: 203px;
+}
