@@ -9,16 +9,11 @@ const $catalog = axios.create({
 
 export default class CatalogAPI{
     static async postBook(title, author, isbn, count){
-        try{
             return $catalog.post("/book?" + new URLSearchParams({
                 title:title,
                 author:author,
                 isbn:isbn,
                 count:count
             }));
-        }catch (e){
-            console.error(e);
-        }
-
     }
 }
