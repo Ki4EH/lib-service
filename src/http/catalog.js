@@ -7,6 +7,12 @@ const $catalog = axios.create({
     baseURL: CATALOG_URL,
 });
 
+$catalog.interceptors.request.use(config => {
+    config.headers.Authorization = `Bearer ${localStorage.getItem('token')}`;
+    return config;
+});
+
+
 export default class CatalogAPI{
     static async postBook(title, author, isbn, count){
             return $catalog.post("/book?" + new URLSearchParams({
