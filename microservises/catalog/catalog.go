@@ -6,11 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // RunCatalogHandler Описывает обработку http запросов
 func RunCatalogHandler(db *sql.DB) {
 	http.HandleFunc("/book", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+		writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		if request.Method == http.MethodGet {
 			id, err := strconv.Atoi(request.URL.Query().Get("book_id"))
 			if err != nil {
@@ -27,6 +31,22 @@ func RunCatalogHandler(db *sql.DB) {
 				return
 			}
 		} else if request.Method == http.MethodPost {
+			//user identity
+			header := request.Header.Get("Authorization")
+			if header == "" {
+				panic("NO AUTHORIZATION TOKEN")
+			}
+			headerParts := strings.Split(header, " ")
+			if len(headerParts) != 2 {
+				panic("invalid token")
+			}
+			_, role, err := ParseToken(headerParts[1])
+			if err != nil {
+				panic(err)
+			}
+			if role != 1 {
+				panic("Forbidden")
+			}
 			var book Book = Book{
 				Title:  request.URL.Query().Get("title"),
 				Author: request.URL.Query().Get("author"),
