@@ -18,26 +18,36 @@ func RunCatalogHandler(db *sql.DB) {
 		if request.Method == http.MethodGet {
 			id, err := strconv.Atoi(request.URL.Query().Get("book_id"))
 			if err != nil {
+				http.Error(writer, http.StatusText(400), 400)
 				panic(err)
+				return
 			}
 			book := getBookByID(db, id)
 
-			res, err1 := json.Marshal(book)
-			if err1 != nil {
-				panic(err1)
-			}
-			_, err2 := writer.Write(res)
-			if err2 != nil {
-				return
+			if book.ID == 0 {
+				http.Error(writer, http.StatusText(404), 404)
+			} else {
+				res, err1 := json.Marshal(book)
+				if err1 != nil {
+					http.Error(writer, http.StatusText(500), 500)
+					panic(err1)
+				}
+				_, err2 := writer.Write(res)
+				if err2 != nil {
+					http.Error(writer, http.StatusText(500), 500)
+					panic(err2)
+				}
 			}
 		} else if request.Method == http.MethodPost {
 			//user identity
 			header := request.Header.Get("Authorization")
 			if header == "" {
+				http.Error(writer, http.StatusText(401), 401)
 				panic("NO AUTHORIZATION TOKEN")
 			}
 			headerParts := strings.Split(header, " ")
 			if len(headerParts) != 2 {
+				http.Error(writer, http.StatusText(401), 401)
 				panic("invalid token")
 			}
 			_, role, err := ParseToken(headerParts[1])
@@ -45,18 +55,23 @@ func RunCatalogHandler(db *sql.DB) {
 				panic(err)
 			}
 			if role != 1 {
+				http.Error(writer, http.StatusText(403), 403)
 				panic("Forbidden")
 			}
 			var book Book = Book{
 				Title:  request.URL.Query().Get("title"),
 				Author: request.URL.Query().Get("author"),
 				ISBN:   request.URL.Query().Get("isbn")}
+			book.Genres = strings.Split(request.URL.Query().Get("genres"), ",")
 			c, err := strconv.Atoi(request.URL.Query().Get("count"))
 			if err != nil {
+				http.Error(writer, http.StatusText(400), 400)
 				panic(err)
+				return
+			} else {
+				book.Count = c
+				postBook(db, book)
 			}
-			book.Count = c
-			postBook(db, book)
 		}
 	})
 
@@ -115,6 +130,15 @@ func postBook(db *sql.DB, book Book) {
 
 	id := insertBook(db, book, authorId)
 	book.ID = id
+
+	for _, genre := range book.Genres {
+		genreId := getGenreId(db, genre)
+		if genreId == 0 {
+			genreId = insertGenre(db, genre)
+		}
+		insertGenreBook(db, book.ID, genreId)
+	}
+
 	insertCatalog(db, book)
 }
 
@@ -205,6 +229,15 @@ func getAuthorId(db *sql.DB, name string) int {
 	return id
 }
 
+func getGenreId(db *sql.DB, genre string) int {
+	var id int
+	err := db.QueryRow("SELECT id FROM genre WHERE name = $1", genre).Scan(&id)
+	if err != nil {
+		return 0
+	}
+	return id
+}
+
 func insertAuthor(db *sql.DB, name string) int {
 	var id int
 	err := db.QueryRow("INSERT INTO author (name) VALUES ($1) RETURNING id", name).Scan(&id)
@@ -212,6 +245,22 @@ func insertAuthor(db *sql.DB, name string) int {
 		panic(err)
 	}
 	return id
+}
+
+func insertGenre(db *sql.DB, genre string) int {
+	var id int
+	err := db.QueryRow("INSERT INTO genre (name) VALUES ($1) RETURNING id", genre).Scan(&id)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func insertGenreBook(db *sql.DB, bookId int, genreId int) {
+	_, err := db.Query("INSERT INTO genre_book (genre_id, book_id) VALUES ($1, $2)", genreId, bookId)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func insertBook(db *sql.DB, book Book, authorId int) int {

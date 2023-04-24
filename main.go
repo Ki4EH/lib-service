@@ -19,5 +19,5 @@ func main() {
 	defer db.Close()
 
 	catalog.RunCatalogHandler(db)
-	fmt.Println(http.ListenAndServe(":5000", nil))
+	fmt.Println(http.ListenAndServe("127.0.0.1:8080", nil))
 }
