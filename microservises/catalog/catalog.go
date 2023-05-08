@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,6 +73,13 @@ func RunCatalogHandler(db *sql.DB) {
 				book.Count = c
 				postBook(db, book)
 			}
+		} else if request.Method == http.MethodDelete {
+			id, err := strconv.Atoi(request.URL.Query().Get("id"))
+			if err != nil {
+				http.Error(writer, http.StatusText(400), 400)
+				panic(err)
+			}
+			deleteBook(db, id)
 		}
 	})
 
@@ -100,11 +108,6 @@ func getBookByID(db *sql.DB, id int) Book {
 	rows := db.QueryRow("select b.id, b.name, b.\"ISBN\", a.name, count from catalog JOIN book b ON catalog.book_id = b.id JOIN author a on a.id = b.author_id where b.id = $1", id)
 	book := Book{}
 	err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
-	//if reflect.TypeOf(nullAuthor) == nil {
-	//	book.Author = ""
-	//} else {
-	//	book.Author = nullAuthor.String
-	//}
 
 	if err != nil {
 		panic(err)
@@ -117,7 +120,7 @@ func getBookByID(db *sql.DB, id int) Book {
 func postBook(db *sql.DB, book Book) {
 	b := findByISBN(db, book.ISBN)
 	if b.ID != 0 {
-		fmt.Println("Книга уже есть в каталоге!")
+		fmt.Println("Book already is in catalog!")
 		book.ID = b.ID
 		updateCatalog(db, book, b.Count)
 		return
@@ -138,8 +141,52 @@ func postBook(db *sql.DB, book Book) {
 		}
 		insertGenreBook(db, book.ID, genreId)
 	}
-
 	insertCatalog(db, book)
+}
+
+func deleteBook(db *sql.DB, id int) {
+	if !bookExists(db, id) {
+		log.Printf("Book not found, nothing to delete")
+		return
+	}
+
+	deleteFromGenreBook(db, id)
+	deleteFromCatalog(db, id)
+
+	_, err := db.Exec("DELETE FROM book WHERE id = $1", id)
+	if err != nil {
+		return
+	}
+	log.Printf("Book deleted from database")
+}
+
+func deleteFromGenreBook(db *sql.DB, bookID int) {
+	_, err := db.Exec("DELETE FROM genre_book WHERE book_id = $1", bookID)
+	if err != nil {
+		return
+	}
+	log.Printf("Row deleted from table genre_book where book_id = %d", bookID)
+}
+
+func deleteFromCatalog(db *sql.DB, bookID int) {
+	_, err := db.Exec("DELETE FROM catalog WHERE book_id = $1", bookID)
+	if err != nil {
+		return
+	}
+	log.Printf("Row deleted from table catalog where book_id = %d", bookID)
+}
+
+func bookExists(db *sql.DB, id int) bool {
+	row := db.QueryRow("SELECT id FROM book WHERE id = $1", id)
+
+	var foundId int
+	row.Scan(&foundId)
+
+	if foundId > 0 {
+		log.Printf("Book with id %d exists", id)
+		return true
+	}
+	return false
 }
 
 // Через эту функцию будет осуществляться основной поиск в бд.
@@ -244,6 +291,7 @@ func insertAuthor(db *sql.DB, name string) int {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Autor %s added to database", name)
 	return id
 }
 
@@ -253,6 +301,7 @@ func insertGenre(db *sql.DB, genre string) int {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Genre %s added to database", genre)
 	return id
 }
 
@@ -261,6 +310,7 @@ func insertGenreBook(db *sql.DB, bookId int, genreId int) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Row added to table genre_book. Book ID: %d, genre ID: %d", bookId, genreId)
 }
 
 func insertBook(db *sql.DB, book Book, authorId int) int {
@@ -269,14 +319,18 @@ func insertBook(db *sql.DB, book Book, authorId int) int {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Book with ID = %d added to database: \n title: %s \n author ID: %s \n ISBN: %s \n count: %d\n genres: %s \n",
+		id, book.Title, book.Author, book.ISBN, book.Count, book.Genres)
 	return id
 }
 
 func updateCatalog(db *sql.DB, book Book, count int) {
-	_, err := db.Exec("UPDATE catalog SET count = $1 WHERE book_id = $2", book.Count+count, book.ID)
+	newCount := count + book.Count
+	_, err := db.Exec("UPDATE catalog SET count = $1 WHERE book_id = $2", newCount, book.ID)
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Row in catalog updated. Now book_id = %d, count = %d", book.ID, newCount)
 }
 
 func insertCatalog(db *sql.DB, book Book) {
@@ -284,6 +338,7 @@ func insertCatalog(db *sql.DB, book Book) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Row in catalog iserted. Now book_id = %d, count = %d", book.ID, book.Count)
 }
 
 func scanGenres(db *sql.DB, book *Book) {
