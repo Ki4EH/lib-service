@@ -1,6 +1,6 @@
 use crate::{
-    access::Access,
-    error::Result,
+    access::MaybeAccess,
+    error::{Error, Result},
     models::{Record, Status},
     state::StateExtract,
 };
@@ -11,7 +11,8 @@ use chrono::{Duration, Utc};
 pub async fn status_by_book_id(
     State(state): StateExtract,
     Path(book_id): Path<i32>,
-) -> Result<&'static str> {
+    access: MaybeAccess,
+) -> Result<String> {
     let mut tx = state.postgres.begin().await?;
     let records = sqlx::query_as!(
         Record,
@@ -22,9 +23,14 @@ pub async fn status_by_book_id(
     .await?;
 
     let status = if records.is_empty() {
-        "available"
+        "available".to_owned()
+    } else if let Some(i) = records
+        .iter()
+        .position(|r| Some(r.user_id) == access.user_id)
+    {
+        i.to_string()
     } else {
-        "unavailable"
+        "unavailable".to_owned()
     };
 
     Ok(status)
@@ -34,8 +40,10 @@ pub async fn status_by_book_id(
 pub async fn loan_by_book_id(
     State(state): StateExtract,
     Path(book_id): Path<i32>,
-    access: Access,
+    access: MaybeAccess,
 ) -> Result<()> {
+    let user_id = access.user_id.ok_or(Error::Unauthorized)?;
+
     let mut tx = state.postgres.begin().await?;
     let records = sqlx::query_as!(
         Record,
@@ -43,7 +51,7 @@ pub async fn loan_by_book_id(
         book_id
     ).fetch_all(&mut tx).await?;
 
-    if records.iter().any(|r| r.user_id == access.user_id) {
+    if records.iter().any(|r| r.user_id == user_id) {
         // Skip if user already queued.
         return Ok(());
     }
@@ -84,8 +92,9 @@ pub async fn loan_by_book_id(
 pub async fn cancel_by_book_id(
     State(state): StateExtract,
     Path(book_id): Path<i32>,
-    access: Access,
+    access: MaybeAccess,
 ) -> Result<()> {
+    let user_id = access.user_id.ok_or(Error::Unauthorized)?;
     let mut tx = state.postgres.begin().await?;
 
     let queue = sqlx::query_as!(
@@ -109,7 +118,7 @@ pub async fn cancel_by_book_id(
 
     // If removed user is not first do nothing.
     let first = queue.first().unwrap();
-    if first.user_id != access.user_id {
+    if first.user_id != user_id {
         return Ok(());
     }
 

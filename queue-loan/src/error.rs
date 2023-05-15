@@ -8,6 +8,8 @@ pub enum Error {
     SqlxError(#[from] sqlx::Error),
     #[error("JWT error: {0}")]
     JwtError(#[from] jsonwebtoken::errors::Error),
+    #[error("User is unauthorized")]
+    Unauthorized,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -17,6 +19,7 @@ impl IntoResponse for Error {
         let status = match self {
             Error::SqlxError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::JwtError(_) => StatusCode::BAD_REQUEST,
+            Error::Unauthorized => StatusCode::UNAUTHORIZED,
         };
 
         if status.is_server_error() {
