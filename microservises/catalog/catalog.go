@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -97,10 +99,6 @@ func RunCatalogHandler(db *sql.DB) {
 			return
 		}
 	})
-	//http.HandleFunc("/book", func(writer http.ResponseWriter, request *http.Request) {
-	//	if request.Method == "POST" {
-	//	}
-	//})
 }
 
 func getBookByID(db *sql.DB, id int) Book {
@@ -120,7 +118,7 @@ func getBookByID(db *sql.DB, id int) Book {
 func postBook(db *sql.DB, book Book) {
 	b := findByISBN(db, book.ISBN)
 	if b.ID != 0 {
-		fmt.Println("Book already is in catalog!")
+		fmt.Println("Книга уже есть в каталоге!")
 		book.ID = b.ID
 		updateCatalog(db, book, b.Count)
 		return
@@ -133,15 +131,41 @@ func postBook(db *sql.DB, book Book) {
 
 	id := insertBook(db, book, authorId)
 	book.ID = id
-
-	for _, genre := range book.Genres {
-		genreId := getGenreId(db, genre)
-		if genreId == 0 {
-			genreId = insertGenre(db, genre)
-		}
-		insertGenreBook(db, book.ID, genreId)
-	}
 	insertCatalog(db, book)
+}
+
+// Через эту функцию будет осуществляться основной поиск в бд.
+// Внутри нее будут вызываться остальные функции, связанные с поиском,
+// со временем ее функционал будет наращиваться.
+func search(db *sql.DB, title string, author string) []Book {
+	var result []Book
+
+	if title != "" {
+		if author == "" {
+			// Трансляция всех элементов из резяльтата поиска по названию в массив result
+			result = searchByTitle(db, title)
+		}
+		//else {
+		//	result = searchByTnA(db, title, author)
+		//}
+	} else {
+		if author != "" {
+			result = searchByAuthor(db, author)
+		} else {
+			result = nil
+		}
+	}
+
+	// Здесь будут применяться другие функции поиска,
+	// которые будут вносить изменения в массив result.
+	// Возможно эту систему поиска потом поменяем
+
+	for i := range result {
+		b := &result[i]
+		scanGenres(db, b)
+	}
+
+	return result
 }
 
 func deleteBook(db *sql.DB, id int) {
@@ -189,73 +213,100 @@ func bookExists(db *sql.DB, id int) bool {
 	return false
 }
 
-// Через эту функцию будет осуществляться основной поиск в бд.
-// Внутри нее будут вызываться остальные функции, связанные с поиском,
-// со временем ее функционал будет наращиваться.
-func search(db *sql.DB, title string, author string) []Book {
-	var result []Book
-
-	if title != "" {
-		if author == "" {
-			// Трансляция всех элементов из резяльтата поиска по названию в массив result
-			result = searchByTitle(db, title)
-		}
-		//else {
-		//	result = searchByTnA(db, title, author)
-		//}
-	} else {
-		if author != "" {
-			result = searchByAuthor(db, author)
-		} else {
-			result = nil
-		}
-	}
-
-	// Здесь будут применяться другие функции поиска,
-	// которые будут вносить изменения в массив result.
-	// Возможно эту систему поиска потом поменяем
-
-	for i := range result {
-		b := &result[i]
-		scanGenres(db, b)
-	}
-
-	return result
-}
-
 // Поиск по названию :\
 func searchByTitle(db *sql.DB, title string) []Book {
 	var books []Book
-	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id WHERE b.name = $1", title)
+	var m map[float64][]Book
+	m = make(map[float64][]Book)
+	minCos := 0.9
+	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id")
 	if err != nil {
 		panic(err)
 	}
 
 	for rows.Next() {
 		var book Book
-		err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
+
+		err = rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
 			panic(err)
 		}
-		books = append(books, book)
+
+		cosValue := cos_r(book.Title, title)
+		if cosValue >= minCos {
+			if m[cosValue] == nil {
+				var bo []Book
+				bo = append(bo, book)
+				m[cosValue] = bo
+			} else {
+				m[cosValue] = append(m[cosValue], book)
+			}
+
+		}
+
+	}
+	for i := 0; i < 5; i++ {
+		if len(m) != 0 {
+			cosMax := max_el(m)
+			for j := 0; j < len(m[cosMax]); j++ {
+				if len(books) < 5 {
+					books = append(books, m[cosMax][j])
+				}
+			}
+			delete(m, cosMax)
+
+		}
+		if len(books) >= 5 {
+			break
+		}
 	}
 	return books
 }
 
 func searchByAuthor(db *sql.DB, author string) []Book {
 	var books []Book
-	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id WHERE a.name = $1", author)
+	var m map[float64][]Book = make(map[float64][]Book)
+	minCos := 0.9
+	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id")
 	if err != nil {
 		panic(err)
 	}
 
 	for rows.Next() {
 		var book Book
+
 		err = rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
 			panic(err)
 		}
-		books = append(books, book)
+
+		cosValue := cos_r(book.Author, author)
+
+		if cosValue >= minCos {
+			if m[cosValue] == nil {
+				var bo []Book
+				bo = append(bo, book)
+				m[cosValue] = bo
+			} else {
+				m[cosValue] = append(m[cosValue], book)
+			}
+		}
+
+	}
+	for i := 0; i < 5; i++ {
+		if len(m) != 0 {
+			cosMax := max_el(m)
+			for j := 0; j < len(m[cosMax]); j++ {
+				if len(books) < 5 {
+					books = append(books, m[cosMax][j])
+				}
+			}
+			delete(m, cosMax)
+
+		}
+		if len(books) >= 5 {
+			break
+		}
 	}
 	return books
 }
@@ -276,41 +327,13 @@ func getAuthorId(db *sql.DB, name string) int {
 	return id
 }
 
-func getGenreId(db *sql.DB, genre string) int {
-	var id int
-	err := db.QueryRow("SELECT id FROM genre WHERE name = $1", genre).Scan(&id)
-	if err != nil {
-		return 0
-	}
-	return id
-}
-
 func insertAuthor(db *sql.DB, name string) int {
 	var id int
 	err := db.QueryRow("INSERT INTO author (name) VALUES ($1) RETURNING id", name).Scan(&id)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Autor %s added to database", name)
 	return id
-}
-
-func insertGenre(db *sql.DB, genre string) int {
-	var id int
-	err := db.QueryRow("INSERT INTO genre (name) VALUES ($1) RETURNING id", genre).Scan(&id)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Genre %s added to database", genre)
-	return id
-}
-
-func insertGenreBook(db *sql.DB, bookId int, genreId int) {
-	_, err := db.Query("INSERT INTO genre_book (genre_id, book_id) VALUES ($1, $2)", genreId, bookId)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Row added to table genre_book. Book ID: %d, genre ID: %d", bookId, genreId)
 }
 
 func insertBook(db *sql.DB, book Book, authorId int) int {
@@ -319,18 +342,14 @@ func insertBook(db *sql.DB, book Book, authorId int) int {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Book with ID = %d added to database: \n title: %s \n author ID: %s \n ISBN: %s \n count: %d\n genres: %s \n",
-		id, book.Title, book.Author, book.ISBN, book.Count, book.Genres)
 	return id
 }
 
 func updateCatalog(db *sql.DB, book Book, count int) {
-	newCount := count + book.Count
-	_, err := db.Exec("UPDATE catalog SET count = $1 WHERE book_id = $2", newCount, book.ID)
+	_, err := db.Exec("UPDATE catalog SET count = $1 WHERE book_id = $2", book.Count+count, book.ID)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Row in catalog updated. Now book_id = %d, count = %d", book.ID, newCount)
 }
 
 func insertCatalog(db *sql.DB, book Book) {
@@ -338,7 +357,6 @@ func insertCatalog(db *sql.DB, book Book) {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Row in catalog iserted. Now book_id = %d, count = %d", book.ID, book.Count)
 }
 
 func scanGenres(db *sql.DB, book *Book) {
@@ -360,35 +378,30 @@ func scanGenres(db *sql.DB, book *Book) {
 	book.Genres = gens
 }
 
-//
-//func getAllBooks(db *sql.DB) []Book {
-//	var res []Book
-//
-//	rows, err := db.Query("SELECT * FROM books")
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	for rows.Next() {
-//		var b = Book{}
-//		rows.Scan(&b.ID, &b.Title, &b.Count)
-//		res = append(res, b)
-//	}
-//
-//	rows, err1 := db.Query("SELECT book_id, name FROM genre_book JOIN genres g ON genre_book.genre_id = g.id WHERE book_id = 1;")
-//	if err1 != nil {
-//		panic(err1)
-//	}
-//	for rows.Next() {
-//		var id int
-//		var genre string
-//		rows.Scan(&id, &genre)
-//
-//		for i := range res {
-//			if res[i].ID == id {
-//				res[i].Genres = append(res[i].Genres, genre)
-//			}
-//		}
-//	}
-//	return res
-//}
+func cos_r(s1 string, s2 string) float64 {
+
+	var sum1, sum2, sum3 int
+	n := int(math.Min(float64(len(s1)), float64(len(s2))))
+	for i := 0; i < n; i++ {
+		sum1 += (int(rune(s1[i])) + 200) * (200 + int(rune(s2[i])))
+		sum2 += (int(rune(s1[i])) + 200) * (200 + int(rune(s1[i])))
+		sum3 += (200 + int(rune(s2[i]))) * (200 + int(rune(s2[i])))
+		//fmt.Println(rune(s1[i]), rune(s2[i]))
+	}
+	//fmt.Println(sum1, sum2, sum3)
+	cos := float64(sum1) / (math.Sqrt(float64(sum2)) * math.Sqrt(float64(sum3)))
+	//fmt.Println(s1, s2, cos)
+	return cos
+}
+
+func max_el(m map[float64][]Book) float64 {
+	var i float64
+	keys := make([]float64, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Float64s(keys)
+
+	i = keys[len(m)-1]
+	return i
+}
