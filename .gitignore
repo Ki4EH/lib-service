@@ -27,3 +27,4 @@
 /.idea/
 /.vscode/
 /.vs/
+.env
