@@ -88,6 +88,31 @@ func RunCatalogHandler(db *sql.DB) {
 	http.HandleFunc("/search", func(writer http.ResponseWriter, request *http.Request) {
 		name := request.URL.Query().Get("title")
 		author := request.URL.Query().Get("author")
+		query := request.URL.Query().Get("query")
+
+		if name == "" && author == "" {
+			var titlePretender, authorPretender []string
+			handleQuery(query)
+
+			for _, str := range titlePretender {
+				_, err1 := writer.Write([]byte(str))
+				if err1 != nil {
+					return
+				}
+			}
+			_, err1 := writer.Write([]byte("\n"))
+			if err1 != nil {
+				return
+			}
+			for _, str := range authorPretender {
+				_, err := writer.Write([]byte(str))
+				if err != nil {
+					return
+				}
+			}
+			return
+		}
+
 		books := search(db, name, author)
 
 		js, err := json.Marshal(books)
@@ -167,6 +192,46 @@ func search(db *sql.DB, title string, author string) []Book {
 
 	return result
 }
+
+//
+//func handleQuery(query string) ([]string, []string) {
+//	var titlePretender, authorPretender []string
+//	doc, err := prose.NewDocument(query)
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	for _, token := range doc.Tokens() {
+//		titlePretender = append(titlePretender, token.Text)
+//
+//		if token.Label == "B-PERSON" {
+//			authorPretender = append(authorPretender, token.Text)
+//		}
+//	}
+//
+//	for _, str := range titlePretender {
+//		print(str + ", ")
+//	}
+//	println()
+//	for _, str := range authorPretender {
+//		print(str + ", ")
+//	}
+//
+//	tempTitles := combinations.All(titlePretender)
+//	tempAuthors := combinations.All(authorPretender)
+//	titlePretender = []string{}
+//	authorPretender = []string{}
+//
+//	for _, i := range tempTitles {
+//		var str = ""
+//		for _, j := range i {
+//			str +=
+//		}
+//	}
+//	return tempTitles, tempAuthors
+//
+//	return titlePretender, authorPretender
+//}
 
 func deleteBook(db *sql.DB, id int) {
 	if !bookExists(db, id) {

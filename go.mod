@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/jdkato/prose/v2 v2.0.0
 	github.com/lib/pq v1.10.7
+	github.com/mxschmitt/golang-combinations v1.2.0
 )
 
 require (
