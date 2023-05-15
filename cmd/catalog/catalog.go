@@ -88,11 +88,11 @@ func RunCatalogHandler(db *sql.DB) {
 	http.HandleFunc("/search", func(writer http.ResponseWriter, request *http.Request) {
 		name := request.URL.Query().Get("title")
 		author := request.URL.Query().Get("author")
-		query := request.URL.Query().Get("query")
+		//query := request.URL.Query().Get("query")
 
 		if name == "" && author == "" {
 			var titlePretender, authorPretender []string
-			handleQuery(query)
+			//handleQuery(query)
 
 			for _, str := range titlePretender {
 				_, err1 := writer.Write([]byte(str))

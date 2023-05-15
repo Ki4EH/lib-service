@@ -1,14 +1,13 @@
-package catalog
+package main
 
 import (
+	"Catalog/cmd/catalog"
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/example/catalog"
-	_ "github.com/lib/pq"
 )
 
 func main() {
