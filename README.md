@@ -30,7 +30,7 @@ book <--> genre
 book <--> genre_book
 genre <--> genre_book
 
-class author{
+class nullAuthor{
     id INTEGER
     name TEXT
 }
