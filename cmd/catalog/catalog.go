@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/jdkato/prose/v2"
+	"github.com/mxschmitt/golang-combinations"
 	"log"
 	"math"
 	"net/http"
@@ -11,6 +13,9 @@ import (
 	"strconv"
 	"strings"
 )
+
+var minCos float64 = 0.9
+var cosCount int = 1
 
 // RunCatalogHandler Описывает обработку http запросов
 func RunCatalogHandler(db *sql.DB) {
@@ -61,7 +66,7 @@ func RunCatalogHandler(db *sql.DB) {
 				http.Error(writer, http.StatusText(403), 403)
 				panic("Forbidden")
 			}
-			var book Book = Book{
+			var book = Book{
 				Title:  request.URL.Query().Get("title"),
 				Author: request.URL.Query().Get("author"),
 				ISBN:   request.URL.Query().Get("isbn")}
@@ -86,40 +91,26 @@ func RunCatalogHandler(db *sql.DB) {
 	})
 
 	http.HandleFunc("/search", func(writer http.ResponseWriter, request *http.Request) {
-		name := request.URL.Query().Get("title")
-		author := request.URL.Query().Get("author")
-		//query := request.URL.Query().Get("query")
+		query := request.URL.Query().Get("query")
 
-		if name == "" && author == "" {
-			var titlePretender, authorPretender []string
-			//handleQuery(query)
-
-			for _, str := range titlePretender {
-				_, err1 := writer.Write([]byte(str))
-				if err1 != nil {
-					return
-				}
-			}
-			_, err1 := writer.Write([]byte("\n"))
-			if err1 != nil {
+		if query == "" {
+			_, err := writer.Write([]byte("Пустой запрос. Введите название книги или имя автора."))
+			if err != nil {
 				return
 			}
-			for _, str := range authorPretender {
-				_, err := writer.Write([]byte(str))
-				if err != nil {
-					return
-				}
-			}
-			return
+			writer.WriteHeader(400)
 		}
 
-		books := search(db, name, author)
+		var titlePretenders, authorPretenders []string
+		titlePretenders, authorPretenders = handleQuery(query)
 
-		js, err := json.Marshal(books)
+		books := search(db, titlePretenders, authorPretenders)
+
+		bookJson, err := json.Marshal(books)
 		if err != nil {
 			panic(err)
 		}
-		_, err1 := writer.Write(js)
+		_, err1 := writer.Write(bookJson)
 		if err1 != nil {
 			return
 		}
@@ -162,28 +153,62 @@ func postBook(db *sql.DB, book Book) {
 // Через эту функцию будет осуществляться основной поиск в бд.
 // Внутри нее будут вызываться остальные функции, связанные с поиском,
 // со временем ее функционал будет наращиваться.
-func search(db *sql.DB, title string, author string) []Book {
+func search(db *sql.DB, titlePretenders []string, authorPretenders []string) []Book {
 	var result []Book
+	bookMap := make(map[int]int)
+	var books []Book
 
-	if title != "" {
-		if author == "" {
-			// Трансляция всех элементов из резяльтата поиска по названию в массив result
-			result = searchByTitle(db, title)
-		}
-		//else {
-		//	result = searchByTnA(db, title, author)
-		//}
-	} else {
-		if author != "" {
-			result = searchByAuthor(db, author)
-		} else {
-			result = nil
+	for _, title := range titlePretenders {
+		for _, author := range authorPretenders {
+
+			if title != "" {
+				// Трансляция всех элементов из результата поиска по названию в массив result
+				for _, i := range searchByTitle(db, title) {
+					if contains(books, i) {
+						bookMap[i.ID] += 1
+
+					} else {
+						books = append(books, i)
+						bookMap[i.ID] = 1
+					}
+				}
+			}
+			if author != "" {
+				for _, i := range searchByAuthor(db, author) {
+					if contains(books, i) {
+						bookMap[i.ID] += 1
+
+					} else {
+						books = append(books, i)
+						bookMap[i.ID] = 1
+					}
+				}
+			}
+
+			// Здесь будут применяться другие функции поиска,
+			// которые будут вносить изменения в массив result.
+			// Возможно эту систему поиска потом поменяем
+
 		}
 	}
 
-	// Здесь будут применяться другие функции поиска,
-	// которые будут вносить изменения в массив result.
-	// Возможно эту систему поиска потом поменяем
+	keys := make([]int, 0, len(bookMap))
+
+	for key := range bookMap {
+		keys = append(keys, key)
+	}
+
+	sort.SliceStable(keys, func(i, j int) bool {
+		return bookMap[keys[i]] > bookMap[keys[j]]
+	})
+
+	for _, i := range keys {
+		for _, b := range books {
+			if b.ID == i {
+				result = append(result, b)
+			}
+		}
+	}
 
 	for i := range result {
 		b := &result[i]
@@ -193,45 +218,46 @@ func search(db *sql.DB, title string, author string) []Book {
 	return result
 }
 
-//
-//func handleQuery(query string) ([]string, []string) {
-//	var titlePretender, authorPretender []string
-//	doc, err := prose.NewDocument(query)
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	for _, token := range doc.Tokens() {
-//		titlePretender = append(titlePretender, token.Text)
-//
-//		if token.Label == "B-PERSON" {
-//			authorPretender = append(authorPretender, token.Text)
-//		}
-//	}
-//
-//	for _, str := range titlePretender {
-//		print(str + ", ")
-//	}
-//	println()
-//	for _, str := range authorPretender {
-//		print(str + ", ")
-//	}
-//
-//	tempTitles := combinations.All(titlePretender)
-//	tempAuthors := combinations.All(authorPretender)
-//	titlePretender = []string{}
-//	authorPretender = []string{}
-//
-//	for _, i := range tempTitles {
-//		var str = ""
-//		for _, j := range i {
-//			str +=
-//		}
-//	}
-//	return tempTitles, tempAuthors
-//
-//	return titlePretender, authorPretender
-//}
+func handleQuery(query string) ([]string, []string) {
+	var titlePretender, authorPretender []string
+	doc, err := prose.NewDocument(query)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, token := range doc.Tokens() {
+		titlePretender = append(titlePretender, token.Text)
+
+		if token.Label == "B-PERSON" {
+			authorPretender = append(authorPretender, token.Text)
+		}
+	}
+
+	tempTitles := combinations.All(titlePretender)
+	tempAuthors := combinations.All(authorPretender)
+	titlePretender = []string{}
+	authorPretender = []string{}
+
+	for _, i := range tempTitles {
+		var str = ""
+		for _, j := range i {
+			str += j + " "
+		}
+		titlePretender = append(titlePretender, str)
+	}
+	for _, i := range tempAuthors {
+		var str = ""
+		for _, j := range i {
+			str += j + " "
+		}
+		authorPretender = append(authorPretender, str)
+	}
+
+	if len(authorPretender) == 0 {
+		authorPretender = []string{" "}
+	}
+	return titlePretender, titlePretender
+}
 
 func deleteBook(db *sql.DB, id int) {
 	if !bookExists(db, id) {
@@ -283,7 +309,6 @@ func searchByTitle(db *sql.DB, title string) []Book {
 	var books []Book
 	var m map[float64][]Book
 	m = make(map[float64][]Book)
-	minCos := 0.9
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id")
 	if err != nil {
 		panic(err)
@@ -310,18 +335,18 @@ func searchByTitle(db *sql.DB, title string) []Book {
 		}
 
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < cosCount; i++ {
 		if len(m) != 0 {
 			cosMax := max_el(m)
 			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < 5 {
+				if len(books) < cosCount {
 					books = append(books, m[cosMax][j])
 				}
 			}
 			delete(m, cosMax)
 
 		}
-		if len(books) >= 5 {
+		if len(books) >= cosCount {
 			break
 		}
 	}
@@ -330,8 +355,7 @@ func searchByTitle(db *sql.DB, title string) []Book {
 
 func searchByAuthor(db *sql.DB, author string) []Book {
 	var books []Book
-	var m map[float64][]Book = make(map[float64][]Book)
-	minCos := 0.9
+	m := make(map[float64][]Book)
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id")
 	if err != nil {
 		panic(err)
@@ -358,18 +382,18 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 		}
 
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < cosCount; i++ {
 		if len(m) != 0 {
 			cosMax := max_el(m)
 			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < 5 {
+				if len(books) < cosCount {
 					books = append(books, m[cosMax][j])
 				}
 			}
 			delete(m, cosMax)
 
 		}
-		if len(books) >= 5 {
+		if len(books) >= cosCount {
 			break
 		}
 	}
@@ -469,4 +493,14 @@ func max_el(m map[float64][]Book) float64 {
 
 	i = keys[len(m)-1]
 	return i
+}
+
+func contains(b []Book, book Book) bool {
+	for _, v := range b {
+		if v.ID == book.ID {
+			return true
+		}
+	}
+
+	return false
 }
