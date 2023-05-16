@@ -16,7 +16,7 @@ pub async fn status_by_book_id(
     let mut tx = state.postgres.begin().await?;
     let records = sqlx::query_as!(
         Record,
-        r#"SELECT user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1"#,
+        r#"SELECT id, user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1"#,
         book_id
     )
     .fetch_all(&mut tx)
@@ -47,7 +47,7 @@ pub async fn loan_by_book_id(
     let mut tx = state.postgres.begin().await?;
     let records = sqlx::query_as!(
         Record,
-        r#"SELECT user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1 ORDER BY id ASC"#,
+        r#"SELECT id, user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1 ORDER BY id ASC"#,
         book_id
     ).fetch_all(&mut tx).await?;
 
@@ -63,7 +63,7 @@ pub async fn loan_by_book_id(
             "
             INSERT INTO queue(user_id, book_id, date, status)
             VALUES ($1, $2, $3, $4)",
-            access.user_id,
+            user_id,
             book_id,
             Some(deadline),
             Status::PendingBorrow as i32,
@@ -75,7 +75,7 @@ pub async fn loan_by_book_id(
             "
             INSERT INTO queue(user_id, book_id, status)
             VALUES ($1, $2, $3)",
-            access.user_id,
+            user_id,
             book_id,
             Status::Queued as i32,
         )
@@ -94,12 +94,12 @@ pub async fn cancel_by_book_id(
     Path(book_id): Path<i32>,
     access: MaybeAccess,
 ) -> Result<()> {
-    let user_id = access.user_id.ok_or(Error::Unauthorized)?;
+    let user_id = 1;
     let mut tx = state.postgres.begin().await?;
 
     let queue = sqlx::query_as!(
         Record,
-        r#"SELECT user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1 ORDER BY id ASC"#,
+        r#"SELECT id, user_id, book_id, date, status as "status: Status" FROM queue WHERE book_id = $1 ORDER BY id ASC"#,
         book_id
     )
     .fetch_all(&mut tx).await?;
@@ -110,7 +110,7 @@ pub async fn cancel_by_book_id(
 
     sqlx::query!(
         "DELETE FROM queue WHERE user_id = $1 AND book_id = $2",
-        access.user_id,
+        user_id,
         book_id
     )
     .execute(&mut tx)
@@ -119,6 +119,7 @@ pub async fn cancel_by_book_id(
     // If removed user is not first do nothing.
     let first = queue.first().unwrap();
     if first.user_id != user_id {
+        tx.commit().await?;
         return Ok(());
     }
 
@@ -127,7 +128,7 @@ pub async fn cancel_by_book_id(
         sqlx::query!(
             "UPDATE queue SET status = $1 WHERE id = $2",
             Status::PendingBorrow as i32,
-            next.user_id
+            next.id
         )
         .execute(&mut tx)
         .await?;

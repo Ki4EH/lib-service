@@ -25,11 +25,13 @@ async fn from_request_parts<'p, S: Send + Sync>(
     state: &'p S,
 ) -> Result<MaybeAccess, StatusCode> {
     let jar = CookieJar::from_request_parts(parts, state).await.unwrap();
-    let token = jar.get("token").ok_or(StatusCode::UNAUTHORIZED)?.value();
+    let Some(token) = jar.get("token") else {
+        return Ok(MaybeAccess { user_id: None })
+    };
 
     let key = include_bytes!("jwt.key");
     let claims = jsonwebtoken::decode(
-        token,
+        token.value(),
         &DecodingKey::from_secret(key),
         &Validation::default(),
     )

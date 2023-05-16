@@ -5,6 +5,7 @@ use sqlx::{
 
 #[derive(Debug, FromRow)]
 pub struct Record {
+    pub id: i32,
     pub user_id: i32,
     pub book_id: i32,
     pub status: Status,

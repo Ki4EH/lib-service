@@ -1,8 +1,12 @@
-use axum::{routing::get, Router, Server};
+use axum::{
+    routing::{get, post},
+    Router, Server,
+};
 use eyre::eyre;
 use sqlx::PgPool;
 use state::ServerState;
 use std::{env::var, sync::Arc};
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing::{debug, log::info};
 
 mod access;
@@ -31,11 +35,20 @@ async fn run() -> eyre::Result<()> {
     dotenvy::dotenv()?;
     tracing_subscriber::fmt::init();
 
+    #[cfg(debug_assertions)]
+    let cors = CorsLayer::permissive();
+    #[cfg(not(debug_assertions))]
+    let cors = CorsLayer::new();
+
     let state = create_state().await?;
     let service_root = Router::new()
         .route("/api/queue/status/:book_id", get(routes::status_by_book_id))
-        .route("/api/queue/loan/:book_id", get(routes::loan_by_book_id))
-        .route("/api/queue/cancel/:book_id", get(routes::cancel_by_book_id))
+        .route("/api/queue/loan/:book_id", post(routes::loan_by_book_id))
+        .route(
+            "/api/queue/cancel/:book_id",
+            post(routes::cancel_by_book_id),
+        )
+        .layer(cors)
         .with_state(state);
 
     Server::bind(&"0.0.0.0:7000".parse()?)
