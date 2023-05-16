@@ -1,4 +1,4 @@
-package catalog
+package main
 
 import (
 	"database/sql"
@@ -46,12 +46,12 @@ func RunCatalogHandler(db *sql.DB) {
 			header := request.Header.Get("Authorization")
 			if header == "" {
 				http.Error(writer, http.StatusText(401), 401)
-				panic("NO AUTHORIZATION TOKEN")
+				panic("NO AUTHORIZATION TOKEN!")
 			}
 			headerParts := strings.Split(header, " ")
 			if len(headerParts) != 2 {
 				http.Error(writer, http.StatusText(401), 401)
-				panic("invalid token")
+				panic("Invalid token!")
 			}
 			_, role, err := ParseToken(headerParts[1])
 			if err != nil {
@@ -61,7 +61,7 @@ func RunCatalogHandler(db *sql.DB) {
 				http.Error(writer, http.StatusText(403), 403)
 				panic("Forbidden")
 			}
-			var book Book = Book{
+			var book = Book{
 				Title:  request.URL.Query().Get("title"),
 				Author: request.URL.Query().Get("author"),
 				ISBN:   request.URL.Query().Get("isbn")}
@@ -128,7 +128,7 @@ func RunCatalogHandler(db *sql.DB) {
 
 func getBookByID(db *sql.DB, id int) Book {
 	// Получение от бд основной инфы про книгу, заносится в переменную book
-	rows := db.QueryRow("select b.id, b.name, b.\"ISBN\", a.name, count from catalog JOIN book b ON catalog.book_id = b.id JOIN author a on a.id = b.author_id where b.id = $1", id)
+	rows := db.QueryRow("SELECT b.id, b.name, b.\"ISBN\", a.name, count FROM catalog JOIN book b ON catalog.book_id = b.id JOIN author a ON a.id = b.author_id WHERE b.id = $1", id)
 	book := Book{}
 	err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 
@@ -269,7 +269,10 @@ func bookExists(db *sql.DB, id int) bool {
 	row := db.QueryRow("SELECT id FROM book WHERE id = $1", id)
 
 	var foundId int
-	row.Scan(&foundId)
+	err := row.Scan(&foundId)
+	if err != nil {
+		return false
+	}
 
 	if foundId > 0 {
 		log.Printf("Book with id %d exists", id)
@@ -330,7 +333,7 @@ func searchByTitle(db *sql.DB, title string) []Book {
 
 func searchByAuthor(db *sql.DB, author string) []Book {
 	var books []Book
-	var m map[float64][]Book = make(map[float64][]Book)
+	var m = make(map[float64][]Book)
 	minCos := 0.9
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id")
 	if err != nil {
@@ -379,7 +382,10 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 func findByISBN(db *sql.DB, ISBN string) Book {
 	row := db.QueryRow("SELECT b.id, b.name, a.name, \"ISBN\", count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a on a.id = b.author_id WHERE \"ISBN\" = $1", ISBN)
 	book := Book{}
-	row.Scan(&book.ID, &book.Title, &book.Author, &book.ISBN, &book.Count)
+	err := row.Scan(&book.ID, &book.Title, &book.Author, &book.ISBN, &book.Count)
+	if err != nil {
+		return Book{}
+	}
 	return book
 }
 
