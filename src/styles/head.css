@@ -18,6 +18,7 @@ header {
   left: 0px;
   top: 0px;
   background-color: white;
+  z-index: 1;
 }
 
 .logo {

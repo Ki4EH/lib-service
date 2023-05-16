@@ -13,6 +13,10 @@
   background-color: #ddd;
 }
 
+.bookPrev:visited {
+  color: black;
+}
+
 .bookImg {
   padding-left: 3px;
 }
@@ -27,4 +31,5 @@
   font-size: 14px;
   line-height: 16px;
   width: 203px;
+  color: black;
 }

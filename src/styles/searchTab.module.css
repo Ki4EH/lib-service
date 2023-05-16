@@ -1,0 +1,31 @@
+.resultSearch {
+  position: absolute;
+  width: 1923px;
+  height: 28px;
+  left: 314px;
+  top: 148px;
+
+  font-family: "Arial";
+  font-style: normal;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  /* identical to box height */
+
+  display: flex;
+  align-items: center;
+
+  color: #000000;
+}
+
+.bookOrder {
+  position: absolute;
+  width: 1293px;
+  height: auto;
+  left: 314px;
+  top: 199.01px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  column-gap: 15px;
+  row-gap: 15px;
+}

@@ -6,8 +6,10 @@ function DashBoard() {
   let tg = ["Рекомендации для вас", "Популярное"];
   return (
     <>
-      <Container info={{ text: tg[0] }} />
-      <Container info={{ text: tg[1] }} />
+      <div className="dashboard">
+        <Container info={{ text: tg[0] }} />
+        <Container info={{ text: tg[1] }} />
+      </div>
     </>
   );
 }

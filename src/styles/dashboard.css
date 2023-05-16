@@ -30,8 +30,6 @@
 
 .scroller {
   display: flex;
-  justify-content: space-between;
-  overflow-x: auto;
-  overflow-y: hidden;
   padding-bottom: 5px;
+  padding-top: 5px;
 }
