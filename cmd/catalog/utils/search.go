@@ -55,24 +55,23 @@ func searchByTitle(db *sql.DB, title string) []Book {
 		}
 
 		words := strings.Split(strings.ToLower(book.Title), " ")
-		for i := 0; i < len(words)-1; i++ {
-			str := ""
-			for _, w := range words[i:] {
-				str += w + " "
-			}
-
-			cosValue := cosR(str, title)
-			if cosValue >= minCos {
-				if m[cosValue] == nil {
-					var bo []Book
-					bo = append(bo, book)
-					m[cosValue] = bo
-				} else {
-					m[cosValue] = append(m[cosValue], book)
+		qWords := strings.Split(strings.ToLower(title), " ")
+		for _, w := range words {
+			for _, qw := range qWords {
+				cosValue := cosR(w, qw)
+				println(w, qw, cosValue)
+				if cosValue >= minCos {
+					if m[cosValue] == nil {
+						var bo []Book
+						bo = append(bo, book)
+						m[cosValue] = bo
+					} else {
+						m[cosValue] = append(m[cosValue], book)
+					}
 				}
-
 			}
 		}
+
 	}
 	for len(books) < cosCount {
 		if len(m) != 0 {
@@ -110,32 +109,33 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 			panic(err)
 		}
 
-		cosValue := cosR(strings.ToLower(book.Author), author)
-
-		if cosValue >= minCos {
-			if m[cosValue] == nil {
-				var bo []Book
-				bo = append(bo, book)
-				m[cosValue] = bo
-			} else {
-				m[cosValue] = append(m[cosValue], book)
+		words := strings.Split(strings.ToLower(book.Author), " ")
+		qWords := strings.Split(strings.ToLower(author), " ")
+		for _, w := range words {
+			for _, qw := range qWords {
+				cosValue := cosR(w, qw)
+				if cosValue >= minCos {
+					if m[cosValue] == nil {
+						var bo []Book
+						bo = append(bo, book)
+						m[cosValue] = bo
+					} else {
+						m[cosValue] = append(m[cosValue], book)
+					}
+				}
 			}
 		}
 
 	}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < cosCount; i++ {
 		if len(m) != 0 {
 			cosMax := maxEl(m)
 			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < 5 {
+				if len(books) < cosCount {
 					books = append(books, m[cosMax][j])
 				}
 			}
 			delete(m, cosMax)
-
-		}
-		if len(books) >= 5 {
-			break
 		}
 	}
 	return books
