@@ -15,6 +15,23 @@ func Search(db *sql.DB, title string, author string) []Book {
 		if author == "" {
 			// Трансляция всех элементов из резяльтата поиска по названию в массив result
 			result = searchByTitle(db, title)
+		} else {
+			byTitle := searchByTitle(db, title)
+			byAuthor := searchByAuthor(db, author)
+
+			for _, b := range byTitle {
+				if contains(result, b) {
+					continue
+				}
+				result = append(result, b)
+			}
+
+			for _, b := range byAuthor {
+				if contains(result, b) {
+					continue
+				}
+				result = append(result, b)
+			}
 		}
 	} else {
 		if author != "" {
@@ -59,7 +76,6 @@ func searchByTitle(db *sql.DB, title string) []Book {
 		for _, w := range words {
 			for _, qw := range qWords {
 				cosValue := cosR(w, qw)
-				println(w, qw, cosValue)
 				if cosValue >= minCos {
 					if m[cosValue] == nil {
 						var bo []Book
