@@ -4,6 +4,7 @@ import (
 	"Catalog/cmd/catalog"
 	"database/sql"
 	"fmt"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
@@ -11,6 +12,11 @@ import (
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		return
+	}
+
 	// Retrieve secrets from environment variables
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
@@ -27,7 +33,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
 
 	catalog.RunCatalogHandler(db)
 
