@@ -4,7 +4,6 @@ import (
 	"Catalog/cmd/catalog"
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
@@ -12,10 +11,6 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
 	// Retrieve secrets from environment variables
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
