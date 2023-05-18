@@ -41,7 +41,6 @@ func searchByTitle(db *sql.DB, title string) []Book {
 	var books []Book
 	var m map[float64][]Book
 	m = make(map[float64][]Book)
-	minCos := 0.9
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id")
 	if err != nil {
 		panic(err)
@@ -55,31 +54,40 @@ func searchByTitle(db *sql.DB, title string) []Book {
 			panic(err)
 		}
 
-		cosValue := cosR(strings.ToLower(book.Title), title)
-		if cosValue >= minCos {
-			if m[cosValue] == nil {
-				var bo []Book
-				bo = append(bo, book)
-				m[cosValue] = bo
-			} else {
-				m[cosValue] = append(m[cosValue], book)
+		words := strings.Split(strings.ToLower(book.Title), " ")
+		for i := 0; i < len(words)-1; i++ {
+			str := ""
+			for _, w := range words[i:] {
+				str += w + " "
 			}
 
-		}
+			cosValue := cosR(str, title)
+			if cosValue >= minCos {
+				if m[cosValue] == nil {
+					var bo []Book
+					bo = append(bo, book)
+					m[cosValue] = bo
+				} else {
+					m[cosValue] = append(m[cosValue], book)
+				}
 
+			}
+		}
 	}
-	for i := 0; i < 5; i++ {
+	for len(books) < cosCount {
 		if len(m) != 0 {
 			cosMax := maxEl(m)
 			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < 5 {
+				if len(books) < cosCount {
+					if contains(books, m[cosMax][j]) {
+						continue
+					}
 					books = append(books, m[cosMax][j])
 				}
 			}
 			delete(m, cosMax)
-
 		}
-		if len(books) >= 5 {
+		if len(books) >= cosCount {
 			break
 		}
 	}
@@ -89,7 +97,6 @@ func searchByTitle(db *sql.DB, title string) []Book {
 func searchByAuthor(db *sql.DB, author string) []Book {
 	var books []Book
 	var m = make(map[float64][]Book)
-	minCos := 0.9
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id")
 	if err != nil {
 		panic(err)

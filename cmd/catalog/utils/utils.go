@@ -5,6 +5,9 @@ import (
 	"log"
 )
 
+var cosCount int = 5
+var minCos float64 = 0.99
+
 func bookExists(db *sql.DB, id int) bool {
 	row := db.QueryRow("SELECT id FROM book WHERE id = $1", id)
 

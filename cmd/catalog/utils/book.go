@@ -8,3 +8,12 @@ type Book struct {
 	Count  int      `json:"count"`
 	Genres []string `json:"genres"`
 }
+
+func contains(books []Book, b Book) bool {
+	for _, a := range books {
+		if a.ID == b.ID {
+			return true
+		}
+	}
+	return false
+}
