@@ -1,4 +1,4 @@
-package catalog
+package main
 
 import (
 	"Catalog/cmd/catalog/utils"
@@ -16,6 +16,7 @@ func httpBookGet(writer http.ResponseWriter, request *http.Request, db *sql.DB) 
 		panic(err)
 		return
 	}
+
 	book := utils.GetBookByID(db, id)
 
 	if book.ID == 0 {

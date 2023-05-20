@@ -1,4 +1,4 @@
-package catalog
+package main
 
 import (
 	"database/sql"

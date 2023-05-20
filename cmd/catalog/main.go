@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Catalog/cmd/catalog"
 	"database/sql"
 	"fmt"
 	"github.com/joho/godotenv"
@@ -40,7 +39,6 @@ func main() {
 		}
 	}(db)
 
-	catalog.RunCatalogHandler(db)
-
+	RunCatalogHandler(db)
 	fmt.Println(http.ListenAndServe("127.0.0.1:8080", nil))
 }
