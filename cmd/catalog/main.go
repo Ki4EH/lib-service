@@ -29,21 +29,10 @@ func main() {
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
 	}(db)
-	// Check if the database is alive
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Successfully connected to PostgreSQL database")
 
-	// Run the catalog handler
-	log.Println("Starting the catalog service")
 	RunCatalogHandler(db)
-	// Run the server
-	log.Printf("Starting the server at http://127.0.0.1:8080")
-	fmt.Println(http.ListenAndServe("0.0.0.0:8080", nil))
-	log.Println("Server stopped")
+	fmt.Println(http.ListenAndServe("127.0.0.1:8080", nil))
 }
