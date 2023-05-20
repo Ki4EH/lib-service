@@ -1,14 +1,26 @@
-## API Reference
+# Library Catalog Service
 
-#### Get all items
+The Library Catalog Service is a microservice designed to manage the catalog of books in a library system. It is
+responsible for storing and retrieving information about the books, including their title, author, ISBN, genre, and
+count (availability).
 
-```http
-  GET /catalog/book?book_id=22
-```
+This service has been built using Go and follows REST principles.
 
-| Parameter | Type     | Description                                   |
-|:----------|:---------|:----------------------------------------------|
-| `book_id` | `string` | **Required**. The ID of the book to retrieve. |
+## API Endpoints
+
+The Catalog Service exposes the following RESTful endpoints:
+
+### GET /catalog/book
+
+Get book entries from the catalog.
+
+Need to provide at **least one** of the following query parameters:
+
+| Parameter | Type     | Description                                       |
+|:----------|:---------|:--------------------------------------------------|
+| `book_id` | `string` | **Optional**. The ID of the book to retrieve.     |
+| `title`   | `string` | **Optional**. The title of the book to retrieve.  |
+| `author`  | `string` | **Optional**. The author of the book to retrieve. |
 
 ### Response:
 
@@ -26,11 +38,9 @@
 }
 ```
 
-Create a new item
+### POST /catalog/book
 
-```http
-  POST /catalog/book
-```
+Creates a new book entry in the catalog.
 
 | Parameter | Type     | Description                        |
 |:----------|:---------|:-----------------------------------|
@@ -40,8 +50,28 @@ Create a new item
 | `genres`  | `array`  | **Required**. The genres of a book |
 | `count`   | `int`    | **Required**. The count of a book  |
 
-Delete an item
+Example:
 
 ```http
-  DELETE /catalog/book?book_id=22
+POST /catalog/book
+Content-Type: application/json
+
+{
+  "title": "The Book Title",
+  "author": "The Book Author",
+  "isbn": "123-4567890123",
+  "genres": ["Fiction", "Thriller"],
+  "count": 5
+}
 ```
+
+### DELETE /catalog/book
+
+Deletes the book entry based on the book id provided as a query parameter.
+
+Example: `DELETE /catalog/book?book_id=22`
+
+## Error Handling
+
+The Catalog Service will return a 400 Bad Request HTTP response code for invalid requests and a 404 Not Found HTTP
+response code for non-existing book ids.
