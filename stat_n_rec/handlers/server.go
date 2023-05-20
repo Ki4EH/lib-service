@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
@@ -8,18 +8,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Message struct {
-	Message   string
-	Details   []int
-	Recommend int
-}
-
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  65536,
-	WriteBufferSize: 65536,
+	ReadBufferSize:  294967296,
+	WriteBufferSize: 294967296,
 }
 
-func main() {
+func start_server_listener() {
 	// Задаём адрес сервера.
 	http.HandleFunc("/", handler)
 	log.Fatal(http.ListenAndServe("127.0.0.1:8899", nil))
@@ -45,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Обработка сырого JSON.
-		var msg Message
+		var msg json_t
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
 			log.Println(err)
@@ -61,5 +55,4 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Сообщение:\n%v\n\n", string(msgJSON))
 
 	}
-
 }
