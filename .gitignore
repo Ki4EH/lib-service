@@ -1,3 +1,5 @@
 *.csv
 /.vscode/
 /__pycache__/
+/stat_n_rec/handlers/config.py
+*rat
