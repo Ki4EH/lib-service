@@ -11,10 +11,6 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		return
-	}
 
 	// Retrieve secrets from environment variables
 	host := os.Getenv("DB_HOST")
