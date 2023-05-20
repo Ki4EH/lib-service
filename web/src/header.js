@@ -34,7 +34,7 @@ function Head() {
     <>
       <header className="headBoard">
         <div className="searcher">
-          <a href="/" style={{ textDecoration: "none" }} className="logo">
+          <a href="/web/public" style={{ textDecoration: "none" }} className="logo">
             Библиотека
             <span className="redPoint">.</span>ru
           </a>
