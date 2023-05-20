@@ -1,3 +1,32 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with 'go test -c'
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (created by 'go mod vendor')
+/vendor/
+
+# Go Modules
+/.cache/
+
+# Compiled Go files
+*.o
+*.a
+
+# Ignoring specific directories
+/.idea/
+/.vscode/
+/.vs/
+*.env
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
