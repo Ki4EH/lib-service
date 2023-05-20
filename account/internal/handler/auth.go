@@ -56,7 +56,7 @@ func (h *Handler) login(c *gin.Context) {
 }
 
 func (h *Handler) logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "localhost", false, true)
+	c.SetCookie("token", "", -1, "/", viper.GetString("SERVER_DOMAIN"), false, true)
 }
 
 func (h *Handler) verify(c *gin.Context) {

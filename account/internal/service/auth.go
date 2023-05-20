@@ -13,7 +13,10 @@ import (
 )
 
 var (
+<<<<<<< HEAD
 	//salt       = ""
+=======
+>>>>>>> account
 	salt       = os.Getenv("SALT")
 	tokenTTL   = 24 * time.Hour
 	signingKey = os.Getenv("SIGNINGKEY")
@@ -25,7 +28,12 @@ type AuthService struct {
 
 type tokenClaims struct {
 	jwt.StandardClaims
+<<<<<<< HEAD
 	UserId int `json:"user_id"`
+=======
+	UserId   int `json:"user_id"`
+	UserRole int `json:"role"`
+>>>>>>> account
 }
 
 func NewAuthService(repo repository.Authorization) *AuthService {
@@ -48,6 +56,10 @@ func (s *AuthService) GenerateToken(login, password string) (string, error) {
 			IssuedAt:  time.Now().Unix(),
 		},
 		user.Id,
+<<<<<<< HEAD
+=======
+		user.Flags,
+>>>>>>> account
 	})
 
 	return token.SignedString([]byte(signingKey))
