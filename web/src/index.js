@@ -10,6 +10,7 @@ import BookPage from "./bookpage.js";
 
 import AuthPage from "./regPage.js";
 import LoginPage from "./loginPage";
+import Adminpage from "./adminpanel/adminpage";
 
 const App = ReactDOM.createRoot(document.getElementById("root"));
 App.render(
@@ -21,6 +22,7 @@ App.render(
         <Route path="/search/" element={<SearchTab />}></Route>
         <Route path="/auth/" element={<AuthPage />}></Route>
         <Route path="/login/" element={<LoginPage />}></Route>
+        <Route path="/admin" element={<Adminpage/>}></Route>
       </Routes>
     </BrowserRouter>
   </>

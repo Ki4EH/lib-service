@@ -18,7 +18,7 @@ function Adminpage(props) {
     }
 
     return (
-        <div style={{position:"relative", top:"148px"}}>
+        <div>
             <h1>ADMINKA</h1>
             <button onClick={(e) => { setBookAddActive(true); }} > Добавить книгу </button>
             <Modal active={bookAddActive} setActive={setBookAddActive}>
