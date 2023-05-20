@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./utils"
+	"Catalog/utils"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -13,27 +13,28 @@ func httpBookGet(writer http.ResponseWriter, request *http.Request, db *sql.DB) 
 	id, err := strconv.Atoi(request.URL.Query().Get("book_id"))
 	if err != nil {
 		http.Error(writer, http.StatusText(400), 400)
-		panic(err)
 		return
 	}
 
-	book := utils.GetBookByID(db, id)
-
-	if book.ID == 0 {
+	book, err := utils.GetBookByID(db, id)
+	if err != nil {
 		http.Error(writer, http.StatusText(404), 404)
-	} else {
-		res, err1 := json.Marshal(book)
-		if err1 != nil {
-			http.Error(writer, http.StatusText(500), 500)
-			panic(err1)
-		}
-		_, err2 := writer.Write(res)
-		if err2 != nil {
-			http.Error(writer, http.StatusText(500), 500)
-			panic(err2)
-		}
+		return
+	}
+
+	res, err := json.Marshal(book)
+	if err != nil {
+		http.Error(writer, http.StatusText(500), 500)
+		return
+	}
+
+	_, err = writer.Write(res)
+	if err != nil {
+		http.Error(writer, http.StatusText(500), 500)
+		return
 	}
 }
+
 func httpBookPost(writer http.ResponseWriter, request *http.Request, db *sql.DB) {
 	header := request.Header.Get("Authorization")
 	if header == "" {

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 )
 
@@ -43,18 +44,24 @@ func scanGenres(db *sql.DB, book *Book) {
 	book.Genres = gens
 }
 
-func GetBookByID(db *sql.DB, id int) Book {
+func GetBookByID(db *sql.DB, id int) (Book, error) {
 	// Получение от бд основной инфы про книгу, заносится в переменную book
 	rows := db.QueryRow("select b.id, b.name, b.\"ISBN\", a.name, count from catalog JOIN book b ON catalog.book_id = b.id JOIN author a on a.id = b.author_id where b.id = $1", id)
 	book := Book{}
 	err := rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 
 	if err != nil {
-		panic(err)
+		if err == sql.ErrNoRows {
+			// Handle empty response (no book found)
+			return Book{}, fmt.Errorf("book not found")
+		}
+		// Handle other errors
+		return Book{}, err
 	}
+
 	scanGenres(db, &book)
 
-	return book
+	return book, nil
 }
 
 func findByISBN(db *sql.DB, ISBN string) Book {
