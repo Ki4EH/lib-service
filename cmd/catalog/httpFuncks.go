@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Catalog/cmd/catalog/utils"
+	"Catalog/utils"
 	"database/sql"
 	"encoding/json"
 	"net/http"

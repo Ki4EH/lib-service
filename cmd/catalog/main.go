@@ -1,12 +1,13 @@
-    package main
+package main
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
