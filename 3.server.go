@@ -9,9 +9,9 @@ import (
 )
 
 type Message struct {
-	Message  string
-	Details  []int
-	Finished int
+	Message   string
+	Details   []int
+	Recommend int
 }
 
 var upgrader = websocket.Upgrader{
