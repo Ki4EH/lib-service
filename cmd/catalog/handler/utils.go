@@ -98,3 +98,26 @@ func contains(books []entities.Book, b entities.Book) bool {
 	}
 	return false
 }
+
+func getBooksFromCosMap(m map[float64][]entities.Book) []entities.Book {
+	var books []entities.Book
+	for len(books) < cosCount {
+		if len(m) != 0 {
+			cosMax := maxEl(m)
+			for j := 0; j < len(m[cosMax]); j++ {
+				if len(books) < cosCount {
+					if contains(books, m[cosMax][j]) {
+						continue
+					}
+					books = append(books, m[cosMax][j])
+				}
+			}
+			delete(m, cosMax)
+		}
+		if len(books) >= cosCount {
+			break
+		}
+	}
+
+	return books
+}

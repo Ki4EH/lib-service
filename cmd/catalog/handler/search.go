@@ -110,23 +110,7 @@ func searchByTitle(db *sql.DB, title string) ([]entities.Book, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	for len(books) < cosCount {
-		if len(m) != 0 {
-			cosMax := maxEl(m)
-			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < cosCount {
-					if contains(books, m[cosMax][j]) {
-						continue
-					}
-					books = append(books, m[cosMax][j])
-				}
-			}
-			delete(m, cosMax)
-		}
-		if len(books) >= cosCount {
-			break
-		}
-	}
+	books = getBooksFromCosMap(m)
 	return books, nil
 }
 
@@ -170,17 +154,6 @@ func searchByAuthor(db *sql.DB, author string) ([]entities.Book, error) {
 		return nil, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	for i := 0; i < cosCount; i++ {
-		if len(m) != 0 {
-			cosMax := maxEl(m)
-			for j := 0; j < len(m[cosMax]); j++ {
-				if len(books) < cosCount {
-					books = append(books, m[cosMax][j])
-				}
-			}
-			delete(m, cosMax)
-		}
-	}
-
+	books = getBooksFromCosMap(m)
 	return books, nil
 }
