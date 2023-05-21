@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/url"
 
 	"github.com/gorilla/websocket"
-	
-	"github.com/Ki4EH/lib-service/stat-n-rec/entities"
 )
 
 func start_server_sender() (*websocket.Conn, error) {

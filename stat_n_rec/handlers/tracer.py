@@ -6,7 +6,6 @@ class Model():
         self.sums = []
         self.sets = dict()
         self.file = file
-        # self.ress = dict()
         self.load(data)
         if file: self.open(file=self.file)
 
@@ -17,10 +16,9 @@ class Model():
             self.sums = list(map(lambda x: int(x), data[0].strip().split(";")))
             for i in data[1:]:
                 summ, d1, d2, d3, d4, res = i.split(";")
-                if summ not in self.sums: self.sets[summ] = [{"data":[d1,d2,d3,d4], "res": res}]
+                summ, d1, d2, d3, d4, res = int(summ), int(d1), int(d2), int(d3), int(d4), int(res)
+                if summ not in self.sets: self.sets[summ] = [{"data":[d1,d2,d3,d4], "res": res}]
                 else: self.sets[summ].append({"data":[d1,d2,d3,d4], "res": res})
-
-            # self.ress = {summ: res for summ, d1, d2, d3, d4, res in data[1:].split(";")}
 
     
     def search(self, des_data):
@@ -47,30 +45,31 @@ class Model():
             perm_set = list(itertools.permutations(result1[i],5))
             for j in perm_set:
                 try:
-                    result2[sum(j[:3])].append(j)
+                    result2[sum(j[:4])].append(j)
                 except:
-                    result2[sum(j[:3])] = [j]
-        self.write(";".join([str(i) for i in result2.keys()]) + "\n", "w")
+                    result2[sum(j[:4])] = [j]
+        self.write(";".join([str(i) for i in sorted(result2.keys())]) + "\n", "w")
         c = 0
         stroke = ""
         for i in result2.keys():
-            # a = [i]
-            # a.extend(result2[i])
-            # print(a)
-            # self.write(";".join(list(map(lambda x: str(x), a))) + "\n", "a")
             for j in result2[i]:
                 c += 1
                 stroke+=str(i) + ";" + ";".join(list(map(lambda x: str(x), j))) + "\n"
                 print(f"{c}/300400", "█" * round(c / 300400 * 20) + "▒" * (20 - round(c / 300400 * 20)), f"{round(c / 300400 * 100, 2)}%", end="\r", flush=True)
         self.write(stroke, "a")
-        
+
+
+# def cleaner(array):
 
 
 def checker(arr, des_data):
     new_arr = dict()
     for i in arr:
-        new_arr[i] = sum([1 for j in i if j in des_data["data"]])
-    return max(new_arr, key=lambda key: new_arr[key])
+        try: new_arr[sum([1 for j in i["data"] if j in des_data["data"]])].append(arr.index(i))
+        except: new_arr[sum([1 for j in i["data"] if j in des_data["data"]])] = [(arr.index(i))]
+    returnable = new_arr[max(new_arr.keys())].copy()
+    ret = [arr[i]["res"] for i in returnable]
+    return ret[:5]
 
 
 def binary_search(arr, x):
@@ -90,6 +89,3 @@ def binary_search(arr, x):
         else:
             return mid
     return mid
-
-
-# def configurator(data):

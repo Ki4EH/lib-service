@@ -2,5 +2,5 @@
 /.vscode/
 /__pycache__/
 /stat_n_rec/handlers/config.py
-*rat
+*.rat
 /stat_n_rec/handlers/__pycache__/

@@ -1,13 +1,9 @@
 import asyncio
 import json
-import websockets
-# from neural import predict
-from tracer import Model
-import psycopg2
-from psycopg2 import Error
 from config import HOST, ROOT
+from tracer import Model
+import websockets
 import db
-
 
 
 connection = db.connect_db(HOST)
@@ -15,8 +11,6 @@ connection = db.connect_db(HOST)
 # db.deleter(connection)
 data, err = db.fetch_data(connection.cursor())
 rat = Model(ROOT, data=data)
-print(rat.sums)
-print(len(rat.sets))
 
 
 active_sockets = set()
@@ -30,12 +24,14 @@ async def handler_json(json_string):
     """
     # Выводим полученный текст от клиента client.go
     print(json_string)
-    prediction = predict(json_string["Details"])
+    req = [int(i) for i in json_string["Details"]]
+    request = {"summ": sum(req), "data": req}
+    prediction = rat.search(request)
 
     print(prediction)
     # Отправляем ответ на server.go
     async with websockets.connect("ws://localhost:8899") as websocket:
-        json_string = {**json_string, "Recommend": int(round(prediction))}
+        json_string = {**json_string, "Recommend": prediction}
         json_string = json.dumps(json_string)
         await websocket.send(json_string)
 
@@ -71,5 +67,5 @@ async def main():
         await asyncio.Future()
 
 
-# if __name__ == "__main__":
-#     asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
