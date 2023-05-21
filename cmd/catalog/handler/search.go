@@ -1,23 +1,37 @@
-package utils
+package handler
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
+	"github.com/Ki4EH/lib-service/catalog/entities"
 	"strings"
 )
 
 // Search Через эту функцию будет осуществляться основной поиск в бд.
 // Внутри нее будут вызываться остальные функции, связанные с поиском,
 // со временем ее функционал будет наращиваться.
-func Search(db *sql.DB, title string, author string) []Book {
-	var result []Book
+func Search(db *sql.DB, title string, author string) ([]entities.Book, error) {
+	var result []entities.Book
 
 	if title != "" {
 		if author == "" {
-			// Трансляция всех элементов из резяльтата поиска по названию в массив result
-			result = searchByTitle(db, title)
+			// Translate all elements from the search result by name into the result array
+			var err error
+			result, err = searchByTitle(db, title)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			byTitle := searchByTitle(db, title)
-			byAuthor := searchByAuthor(db, author)
+			byTitle, err := searchByTitle(db, title)
+			if err != nil {
+				return nil, err
+			}
+
+			byAuthor, err := searchByAuthor(db, author)
+			if err != nil {
+				return nil, err
+			}
 
 			for _, b := range byTitle {
 				if contains(result, b) {
@@ -35,40 +49,43 @@ func Search(db *sql.DB, title string, author string) []Book {
 		}
 	} else {
 		if author != "" {
-			result = searchByAuthor(db, author)
+			var err error
+			result, err = searchByAuthor(db, author)
+			if err != nil {
+				return nil, err
+			}
 		} else {
-			result = nil
+			return nil, errors.New("both title and author parameters are empty")
 		}
 	}
 
-	// Здесь будут применяться другие функции поиска,
-	// которые будут вносить изменения в массив result.
-	// Возможно эту систему поиска потом поменяем
-
 	for i := range result {
 		b := &result[i]
-		scanGenres(db, b)
+		err := scanGenres(db, b)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return result
+	return result, nil
 }
 
 // Поиск по названию :\
-func searchByTitle(db *sql.DB, title string) []Book {
-	var books []Book
-	var m map[float64][]Book
-	m = make(map[float64][]Book)
+func searchByTitle(db *sql.DB, title string) ([]entities.Book, error) {
+	var books []entities.Book
+	m := make(map[float64][]entities.Book)
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON a.id = b.author_id")
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error querying database: %v", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
-		var book Book
+		var book entities.Book
 
 		err = rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
 		words := strings.Split(strings.ToLower(book.Title), " ")
@@ -78,7 +95,7 @@ func searchByTitle(db *sql.DB, title string) []Book {
 				cosValue := cosR(w, qw)
 				if cosValue >= minCos {
 					if m[cosValue] == nil {
-						var bo []Book
+						var bo []entities.Book
 						bo = append(bo, book)
 						m[cosValue] = bo
 					} else {
@@ -89,6 +106,10 @@ func searchByTitle(db *sql.DB, title string) []Book {
 		}
 
 	}
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
 	for len(books) < cosCount {
 		if len(m) != 0 {
 			cosMax := maxEl(m)
@@ -106,23 +127,25 @@ func searchByTitle(db *sql.DB, title string) []Book {
 			break
 		}
 	}
-	return books
+	return books, nil
 }
 
-func searchByAuthor(db *sql.DB, author string) []Book {
-	var books []Book
-	var m = make(map[float64][]Book)
+func searchByAuthor(db *sql.DB, author string) ([]entities.Book, error) {
+	var books []entities.Book
+	var m = make(map[float64][]entities.Book)
+
 	rows, err := db.Query("SELECT b.id, b.name, \"ISBN\", a.name, count FROM catalog JOIN book b on b.id = catalog.book_id JOIN author a ON b.author_id = a.id")
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("error querying database: %v", err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
-		var book Book
+		var book entities.Book
 
 		err = rows.Scan(&book.ID, &book.Title, &book.ISBN, &book.Author, &book.Count)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
 		words := strings.Split(strings.ToLower(book.Author), " ")
@@ -132,7 +155,7 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 				cosValue := cosR(w, qw)
 				if cosValue >= minCos {
 					if m[cosValue] == nil {
-						var bo []Book
+						var bo []entities.Book
 						bo = append(bo, book)
 						m[cosValue] = bo
 					} else {
@@ -141,8 +164,12 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 				}
 			}
 		}
-
 	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
 	for i := 0; i < cosCount; i++ {
 		if len(m) != 0 {
 			cosMax := maxEl(m)
@@ -154,5 +181,6 @@ func searchByAuthor(db *sql.DB, author string) []Book {
 			delete(m, cosMax)
 		}
 	}
-	return books
+
+	return books, nil
 }

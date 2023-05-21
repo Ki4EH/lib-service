@@ -1,6 +1,7 @@
-package utils
+package handler
 
 import (
+	"github.com/Ki4EH/lib-service/catalog/entities"
 	"math"
 	"sort"
 )
@@ -18,7 +19,7 @@ func cosR(s1 string, s2 string) float64 {
 	return cos
 }
 
-func maxEl(m map[float64][]Book) float64 {
+func maxEl(m map[float64][]entities.Book) float64 {
 	var i float64
 	keys := make([]float64, 0, len(m))
 	for k := range m {
