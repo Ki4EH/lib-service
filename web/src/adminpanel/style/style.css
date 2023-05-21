@@ -1,0 +1,13 @@
+.admin__panel{
+    display:flex;
+    justify-content:center;
+    text-align: center;
+    flex-direction:column;
+}
+
+.admin__btn{
+    width: 50%;
+    height: 50px;
+    margin: 0 20px;
+    font-size: 24px;
+}

@@ -1,5 +1,8 @@
 # Default ignored files
+<<<<<<< HEAD
 dataSources.xml
+=======
+>>>>>>> adminpanel
 /shelf/
 /workspace.xml
 # Editor-based HTTP Client requests

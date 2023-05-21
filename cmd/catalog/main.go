@@ -1,21 +1,14 @@
 package main
 
 import (
-	"Catalog/cmd/catalog"
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
 	// Retrieve secrets from environment variables
 	host := os.Getenv("DB_HOST")
 	port := os.Getenv("DB_PORT")
@@ -26,15 +19,19 @@ func main() {
 	// Construct the connection string
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-
+	log.Println("Connecting to PostgreSQL database")
 	// Open the database connection
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(db)
 
-	catalog.RunCatalogHandler(db)
-
-	fmt.Println(http.ListenAndServe("127.0.0.1:8080", nil))
+	RunCatalogHandler(db)
+	fmt.Println(http.ListenAndServe(":8080", nil))
 }

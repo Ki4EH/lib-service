@@ -16,8 +16,6 @@
 
 # Go Modules
 /.cache/
-/go.sum
-/go.mod
 
 # Compiled Go files
 *.o
@@ -27,4 +25,4 @@
 /.idea/
 /.vscode/
 /.vs/
-.env
+*.env

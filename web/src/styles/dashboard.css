@@ -1,0 +1,35 @@
+.container {
+  position: relative;
+  width: 67.34375%;
+  height: 406px;
+  left: 16.35416%;
+  align-self: center;
+  top: 148px;
+}
+
+.textContainer {
+  justify-content: left;
+  display: flex;
+}
+
+.tagText {
+  font-family: "Arial";
+  font-style: normal;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+  /* identical to box height */
+
+  display: flex;
+  align-items: center;
+}
+
+.rightArrow1 {
+  padding-left: 29px;
+}
+
+.scroller {
+  display: flex;
+  padding-bottom: 5px;
+  padding-top: 5px;
+}
