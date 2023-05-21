@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use sqlx::{
     types::chrono::{DateTime, Utc},
     FromRow, Type,
@@ -12,7 +13,7 @@ pub struct Record {
     pub date: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Type)]
+#[derive(Debug, Serialize, Deserialize, Type)]
 #[repr(i32)]
 pub enum Status {
     PendingBorrow,
@@ -28,4 +29,12 @@ pub struct User {
     pub password_hash: String,
     pub flags: String,
     pub confirm_token: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Order {
+    pub book_id: i32,
+    pub status: Status,
+    pub position: u32,
+    pub date: Option<DateTime<Utc>>,
 }

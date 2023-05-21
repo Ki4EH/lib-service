@@ -1,0 +1,178 @@
+{
+  "db": "PostgreSQL",
+  "009caea40be99aea52cf0d525f344edcc14b6e7c92e2920803f5f237579b13bf": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "book_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "date",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status: Status",
+          "ordinal": 4,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT id, user_id, book_id, date, status as \"status: Status\" FROM queue WHERE book_id = $1"
+  },
+  "120a34c25e3efa1430926c1496f12e011d86b66262a6c130f45131b5d0f9c775": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "UPDATE queue SET status = $1 WHERE id = $2"
+  },
+  "52ba696ec9fb3a407da107f427baa6b7f6b4a7be3fc0c5a40a4eaa20f600b0d2": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Timestamptz",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO queue(user_id, book_id, date, status)\n            VALUES ($1, $2, $3, $4)"
+  },
+  "a06136666aafc6f7a42f856e2063829e464e6c410aaae600c54035004401cc27": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "DELETE FROM queue WHERE user_id = $1 AND book_id = $2"
+  },
+  "c9b7ee84ab04f2f0ef54c71dccee2580e8701290767ed5ce383d691546b0354a": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO queue(user_id, book_id, status)\n            VALUES ($1, $2, $3)"
+  },
+  "d60b94f8da7b5fa9ccb24e1cba1f564d88e2b5821d4a3aefd5e3598e83b3025a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "user_id",
+          "ordinal": 1,
+          "type_info": "Int4"
+        },
+        {
+          "name": "book_id",
+          "ordinal": 2,
+          "type_info": "Int4"
+        },
+        {
+          "name": "date",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status: Status",
+          "ordinal": 4,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT id, user_id, book_id, date, status as \"status: Status\" FROM queue WHERE book_id = $1 ORDER BY id ASC"
+  },
+  "e52609dc6fce3ebc3a6608d337e4aca7c92c1479b0e00008110394ee35a0fe7b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "book_id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "date",
+          "ordinal": 1,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status",
+          "ordinal": 2,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT book_id, date, status FROM queue WHERE user_id = $1"
+  }
+}
