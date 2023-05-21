@@ -1,4 +1,4 @@
-module Catalog
+module github.com/Ki4EH/lib-service/catalog
 
 go 1.19
 
