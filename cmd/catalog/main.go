@@ -3,20 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	"os"
-
-	_ "github.com/lib/pq"
 )
 
 func main() {
 	// Retrieve secrets from environment variables
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
+	host := "95.140.159.168"
+	port := "5433"
+	user := "go_project"
+	password := "rIo3Fc"
+	dbname := "lib-service-test"
 
 	// Construct the connection string
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -35,5 +33,5 @@ func main() {
 	}(db)
 
 	RunCatalogHandler(db)
-	fmt.Println(http.ListenAndServe("127.0.0.1:8080", nil))
+	fmt.Println(http.ListenAndServe(":8080", nil))
 }
