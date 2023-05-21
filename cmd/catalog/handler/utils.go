@@ -77,7 +77,7 @@ func findByISBN(db *sql.DB, ISBN string) entities.Book {
 	book := entities.Book{}
 	err := row.Scan(&book.ID, &book.Title, &book.Author, &book.ISBN, &book.Count)
 	if err != nil {
-		panic(err)
+		return entities.Book{}
 	}
 	return book
 }
