@@ -22,7 +22,7 @@ var upgrader = websocket.Upgrader{
 func main() {
 	// Задаём адрес сервера.
 	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe("127.0.0.1:8899", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8899", nil))
 }
 
 // Обработчик подключений.

@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"stat_n_rec/entities"
 
 	"github.com/gorilla/websocket"
 )
 
 func start_server_sender() (*websocket.Conn, error) {
 	// Задаём адрес сервера.
-	u := url.URL{Scheme: "ws", Host: "127.0.0.1:8888", Path: "/"}
+	u := url.URL{Scheme: "ws", Host: "0.0.0.0:8888", Path: "/"}
 
 	// Создаём подключение к серверу.
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)

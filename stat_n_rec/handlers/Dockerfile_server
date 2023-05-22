@@ -1,0 +1,21 @@
+# stat_n_rec/server/Dockerfile_client
+# Build stage
+FROM golang:1.19-alpine AS build-env
+
+WORKDIR /app
+COPY ../go.mod ../go.sum ./
+COPY . .
+
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./handlers/server.go
+
+# Final stage
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+COPY --from=build-env /app/main .
+
+CMD ["./main"]
