@@ -6,3 +6,21 @@ services:
       - "8080:8080"
     env_file:
       - ./cmd/catalog/.env
+  statistics-client:
+    build:
+      context: ./cmd/statistics
+      dockerfile: ./handlers/Dockerfile_client
+    ports:
+      - "8888:8888"
+    env_file:
+      - ./cmd/statistics/.env
+    depends_on:
+      - catalog
+  statistics-server:
+    build:
+      context: ./cmd/statistics
+      dockerfile: ./handlers/Dockerfile_server
+    ports:
+      - "8889:8889"
+    env_file:
+      - ./cmd/statistics/.env
