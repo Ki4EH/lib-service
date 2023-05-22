@@ -47,7 +47,7 @@ func main() {
 	defer conn.Close()
 
 	// Гненерируем сообщение и передаём его на сервер.
-	message := entities.json_t{"Zubenko", []int{1, 2, 2, 1, 1}}
+	message := entities.json_t{"Zubenko", []int{1, 2, 2, 1}}
 
 	// Отправляем сообщение на сервер.
 	err = send_json(conn, message)
