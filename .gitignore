@@ -1,3 +1,8 @@
+*.csv
+/.vscode/
+*.rat
+*.__pycache__/
+recomendations.txt
 # Binaries for programs and plugins
 *.exe
 *.exe~
