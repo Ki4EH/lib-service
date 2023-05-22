@@ -34,6 +34,8 @@ pub struct User {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Order {
     pub book_id: i32,
+    pub book_name: String,
+    pub book_author: String,
     pub status: Status,
     pub position: u32,
     pub date: Option<DateTime<Utc>>,

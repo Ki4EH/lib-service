@@ -16,7 +16,11 @@ pub async fn orders(State(state): StateExtract, access: MaybeAccess) -> Result<J
     let user_id = access.user_id.ok_or(Error::Unauthorized)?;
     let mut tx = state.postgres.begin().await?;
     let records = sqlx::query!(
-        "SELECT book_id, date, status FROM queue WHERE user_id = $1",
+        "SELECT queue.book_id, book.name as book_name, author.name as book_author, queue.date, queue.status
+        FROM queue
+        INNER JOIN book ON book.id = queue.book_id
+        INNER JOIN author ON author.id = book.author_id
+        WHERE queue.user_id = $1",
         user_id
     )
     .fetch_all(&mut tx)
@@ -31,6 +35,8 @@ pub async fn orders(State(state): StateExtract, access: MaybeAccess) -> Result<J
             status: unsafe { transmute(r.status) },
             position: i as u32,
             date: r.date,
+            book_name: r.book_name,
+            book_author: r.book_author,
         })
         .collect::<Vec<_>>()
         .into())
