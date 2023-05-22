@@ -4,14 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"stat_n_rec/entities"
 
 	"github.com/gorilla/websocket"
 )
 
+// Структура для передачи данных
+type json_t struct {
+	message string
+	details []int
+}
+
 func start_server_sender() (*websocket.Conn, error) {
 	// Задаём адрес сервера.
-	u := url.URL{Scheme: "ws", Host: "0.0.0.0:8888", Path: "/"}
+	u := url.URL{Scheme: "ws", Host: "127.0.0.1:8888", Path: "/"}
 
 	// Создаём подключение к серверу.
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -22,7 +27,7 @@ func start_server_sender() (*websocket.Conn, error) {
 	return conn, nil
 }
 
-func send_json(conn *websocket.Conn, message entities.json_t) error {
+func send_json(conn *websocket.Conn, message json_t) error {
 	// Кодируем сообщение в JSON.
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
@@ -48,7 +53,7 @@ func main() {
 	defer conn.Close()
 
 	// Гненерируем сообщение и передаём его на сервер.
-	message := entities.json_t{"Zubenko", []int{1, 2, 2, 1}}
+	message := json_t{"Zubenko", []int{1, 2, 2, 1}}
 
 	// Отправляем сообщение на сервер.
 	err = send_json(conn, message)
