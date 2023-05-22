@@ -2,7 +2,6 @@ use axum::{
     routing::{get, post},
     Router, Server,
 };
-use base64::{prelude::BASE64_STANDARD, Engine};
 use eyre::eyre;
 use sqlx::PgPool;
 use state::ServerState;
@@ -31,9 +30,7 @@ async fn create_state() -> eyre::Result<Arc<ServerState>> {
 
     Ok(ServerState {
         postgres: pool,
-        jwt: BASE64_STANDARD
-            .decode(&key)
-            .map_err(|_| eyre!("Invalid base64 encoded `JWT_KEY`"))?,
+        jwt: key.into_bytes(),
     }
     .into())
 }

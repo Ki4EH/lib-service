@@ -72,6 +72,50 @@
     },
     "query": "\n            INSERT INTO queue(user_id, book_id, date, status)\n            VALUES ($1, $2, $3, $4)"
   },
+  "61b30f9650630679993759111da4adc59bc46cf8399d2c517880caa3c268fde1": {
+    "describe": {
+      "columns": [
+        {
+          "name": "book_id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "book_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "book_author",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "date",
+          "ordinal": 3,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "status",
+          "ordinal": 4,
+          "type_info": "Int4"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      }
+    },
+    "query": "SELECT queue.book_id, book.name as book_name, author.name as book_author, queue.date, queue.status\n        FROM queue\n        INNER JOIN book ON book.id = queue.book_id\n        INNER JOIN author ON author.id = book.author_id\n        WHERE queue.user_id = $1"
+  },
   "a06136666aafc6f7a42f856e2063829e464e6c410aaae600c54035004401cc27": {
     "describe": {
       "columns": [],
@@ -142,37 +186,5 @@
       }
     },
     "query": "SELECT id, user_id, book_id, date, status as \"status: Status\" FROM queue WHERE book_id = $1 ORDER BY id ASC"
-  },
-  "e52609dc6fce3ebc3a6608d337e4aca7c92c1479b0e00008110394ee35a0fe7b": {
-    "describe": {
-      "columns": [
-        {
-          "name": "book_id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "date",
-          "ordinal": 1,
-          "type_info": "Timestamptz"
-        },
-        {
-          "name": "status",
-          "ordinal": 2,
-          "type_info": "Int4"
-        }
-      ],
-      "nullable": [
-        false,
-        true,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Int4"
-        ]
-      }
-    },
-    "query": "SELECT book_id, date, status FROM queue WHERE user_id = $1"
   }
 }

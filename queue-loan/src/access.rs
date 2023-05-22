@@ -1,5 +1,4 @@
-use std::sync::Arc;
-
+use crate::state::ServerState;
 use axum::{
     extract::FromRequestParts,
     http::{request::Parts, StatusCode},
@@ -7,8 +6,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use jsonwebtoken::{DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
-
-use crate::state::ServerState;
+use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct MaybeAccess {
