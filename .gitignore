@@ -1,7 +1,33 @@
 *.csv
 /.vscode/
-/__pycache__/
-/stat_n_rec/handlers/config.py
 *.rat
-/stat_n_rec/handlers/__pycache__/
+*.__pycache__/
 recomendations.txt
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with 'go test -c'
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (created by 'go mod vendor')
+/vendor/
+
+# Go Modules
+/.cache/
+
+# Compiled Go files
+*.o
+*.a
+
+# Ignoring specific directories
+/.idea/
+/.vscode/
+/.vs/
+*.env
