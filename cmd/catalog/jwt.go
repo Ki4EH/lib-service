@@ -1,4 +1,4 @@
-package catalog
+package main
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ const signingKey = "342ij432"
 type tokenClaims struct {
 	jwt.StandardClaims
 	UserId int `json:"user_id"`
-	Role   int `json: "role"`
+	Role   int `json:"role"`
 }
 
 func ParseToken(accessToken string) (int, int, error) {

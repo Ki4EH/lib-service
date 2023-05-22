@@ -1,4 +1,4 @@
-package catalog
+package entities
 
 type Book struct {
 	ID     int      `json:"id"`
