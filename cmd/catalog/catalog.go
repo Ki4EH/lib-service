@@ -18,8 +18,9 @@ func RunCatalogHandler(db *sql.DB) {
 	})
 
 	http.HandleFunc("/search", func(writer http.ResponseWriter, request *http.Request) {
-		httpSearch(writer, request, db)
+		httpKostilSearch(writer, request, db)
 	})
+
 	http.HandleFunc("/ping", func(writer http.ResponseWriter, request *http.Request) {
 		_, err := writer.Write([]byte("pong"))
 		if err != nil {

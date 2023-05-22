@@ -96,11 +96,42 @@ func httpSearch(writer http.ResponseWriter, request *http.Request, db *sql.DB) {
 
 	if name == "" && author == "" {
 		// This is where you should handle the case where both 'name' and 'author' are empty
-		http.Error(writer, "Missing title and author parameters", http.StatusBadRequest)
-		return
 	}
 
 	books, err := handler.Search(db, name, author)
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	jsonBooks, err := json.Marshal(books)
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	writer.Header().Set("Content-Type", "application/json")
+	_, err = writer.Write(jsonBooks)
+	if err != nil {
+		http.Error(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func httpKostilSearch(writer http.ResponseWriter, request *http.Request, db *sql.DB) {
+	query := request.URL.Query().Get("query")
+	if query == "" {
+		http.Error(writer, "Empty query", http.StatusBadRequest)
+		return
+	}
+	qParts := strings.Split(query, " ")
+	if len(qParts) != 2 {
+		http.Error(writer, "Query must contain 2 words", http.StatusBadRequest)
+		return
+	}
+	author, title := qParts[0], qParts[1]
+
+	books, err := handler.Search(db, title, author)
 	if err != nil {
 		http.Error(writer, "Internal server error", http.StatusInternalServerError)
 		return
