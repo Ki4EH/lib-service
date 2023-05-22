@@ -1,60 +1,65 @@
-package handlers
+package main
 
 import (
 	"encoding/json"
 	"log"
-	"net/url"
+	"net/http"
 
 	"github.com/gorilla/websocket"
-	
-	"github.com/Ki4EH/lib-service/stat-n-rec/entities"
 )
 
-func start_server_sender() (*websocket.Conn, error) {
-	// Задаём адрес сервера.
-	u := url.URL{Scheme: "ws", Host: "127.0.0.1:8888", Path: "/"}
-
-	// Создаём подключение к серверу.
-	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка подключения к серверу: %w", err)
-	}
-
-	return conn, nil
+type Message struct {
+	Message  string
+	Details  []int
+	Finished int
 }
 
-func send_json(conn *websocket.Conn, message entities.json_t) error {
-	// Кодируем сообщение в JSON.
-	jsonMessage, err := json.Marshal(message)
-	if err != nil {
-		return fmt.Errorf("ошибка при маршалинге JSON-сообщения: %w", err)
-	}
-
-	// Отправляем сообщение на сервер.
-	err = conn.WriteMessage(websocket.TextMessage, jsonMessage)
-	if err != nil {
-		return fmt.Errorf("ошибка при отправке JSON-сообщения на сервер: %w", err)
-	}
-
-	return nil
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  65536,
+	WriteBufferSize: 65536,
 }
 
-/*
 func main() {
-	// Создаём подключение к серверу.
-	conn, err := start_server_sender()
+	// Задаём адрес сервера.
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe("127.0.0.1:8899", nil))
+}
+
+// Обработчик подключений.
+func handler(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	defer conn.Close()
 
-	// Гненерируем сообщение и передаём его на сервер.
-	message := entities.json_t{"Zubenko", []int{1, 2, 2, 1, 1}}
+	// Прослушивание всех сообщений, полученных сервером.
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
 
-	// Отправляем сообщение на сервер.
-	err = send_json(conn, message)
-	if err != nil {
-		log.Fatal(err)
+		// Обработка сырого JSON.
+		var msg Message
+		err = json.Unmarshal(message, &msg)
+		if err != nil {
+			log.Println(err)
+			break
+		}
+
+		// Вывод сырого сообщения, которое было получено.
+		msgJSON, err := json.MarshalIndent(msg, "", "  ")
+		if err != nil {
+			log.Println(err)
+			break
+		}
+		log.Printf("Сообщение:\n%v\n\n", string(msgJSON))
+
 	}
+
 }
-*/
