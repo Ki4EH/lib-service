@@ -6,3 +6,5 @@ HOST = {"user": "go_project",
 
 
 ROOT = "tracer/entities/data.rat"
+
+PORT = "ws://localhost:8899"

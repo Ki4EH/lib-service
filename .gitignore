@@ -4,3 +4,4 @@
 /stat_n_rec/handlers/config.py
 *.rat
 /stat_n_rec/handlers/__pycache__/
+*.txt

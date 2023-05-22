@@ -1,6 +1,6 @@
 import asyncio
 import json
-from config import HOST, ROOT
+from config import HOST, ROOT, PORT
 from tracer import Model
 import websockets
 import db
@@ -30,7 +30,7 @@ async def handler_json(json_string):
 
     print(prediction)
     # Отправляем ответ на server.go
-    async with websockets.connect("ws://localhost:8899") as websocket:
+    async with websockets.connect(PORT) as websocket:
         json_string = {**json_string, "Recommend": prediction}
         json_string = json.dumps(json_string)
         await websocket.send(json_string)
